@@ -4,3 +4,6 @@ __pycahche__/
 .part2_analysis.py.swo
 .schema.sql.swp
 *.save
+
+frontend/node_modules/
+frontend/dist/

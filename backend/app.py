@@ -1,10 +1,19 @@
-from flask import Flask, render_template, jsonify, request
-#from pyngrok import ngrok
-import mysql.connector
+from flask import Flask, jsonify, request, send_from_directory, abort
+import os
+import pymysql
 import statistics
 
 #ngrok.set_auth_token("3AKEvX4qI21UaAB4cX3yxgWk7FM_41AneqQLpQT1pi2P2jNzR")
 app = Flask(__name__)
+
+REACT_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+
+@app.after_request
+def cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
 
 DB_CONFIG = {
     "host": "127.0.0.1",
@@ -13,7 +22,6 @@ DB_CONFIG = {
     "database": "cs179g"
 }
 
-# Sidebar structure
 CATEGORIES = {
     "Time-of-Day": {
         "Hourly Crimes": "hourly_crimes",
@@ -45,23 +53,26 @@ CATEGORIES = {
 }
 
 def query_table(table_name):
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor(dictionary=True)
+    conn = pymysql.connect(**DB_CONFIG, cursorclass=pymysql.cursors.DictCursor)
+    cursor = conn.cursor()
     cursor.execute(f"SELECT * FROM {table_name}")
     data = cursor.fetchall()
     conn.close()
     return data
 
-@app.route("/")
-def index():
-    return render_template("index.html", categories=CATEGORIES)
+ALLOWED_TABLES = {t for items in CATEGORIES.values() for t in items.values()}
+
+@app.route("/api/categories")
+def get_categories():
+    return jsonify(CATEGORIES)
 
 @app.route("/api/data")
 def get_data():
     table = request.args.get("table")
+    if not table or table not in ALLOWED_TABLES:
+        return jsonify({"error": "Invalid or missing table name", "data": [], "stats": {}}), 400
     data = query_table(table)
 
-    # Example basic statistic (total count if column exists)
     stats = {}
     if data and "count" in data[0]:
         counts = [row["count"] for row in data]
@@ -73,12 +84,32 @@ def get_data():
         "stats": stats
     })
 
+
+@app.route("/")
+def serve_react():
+    if os.path.isdir(REACT_DIST) and os.path.isfile(os.path.join(REACT_DIST, "index.html")):
+        return send_from_directory(REACT_DIST, "index.html")
+    return "Run: cd frontend && npm run build", 404
+
+
+@app.route("/<path:path>")
+def serve_react_static(path):
+    if path.startswith("api/"):
+        abort(404)
+    if os.path.isdir(REACT_DIST):
+        full = os.path.join(REACT_DIST, path)
+        if os.path.isfile(full):
+            return send_from_directory(REACT_DIST, path)
+        return send_from_directory(REACT_DIST, "index.html")
+    abort(404)
+
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--port", default=5000, type=int)
+    parser.add_argument("--port", default=5001, type=int)
     args = parser.parse_args()
 
     app.run(host=args.host, port=args.port, debug=True)

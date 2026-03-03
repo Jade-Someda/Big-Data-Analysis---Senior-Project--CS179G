@@ -1,0 +1,59 @@
+.layout {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.sidebar {
+  width: 240px;
+  border-right: 1px solid #ccc;
+  padding-right: 1rem;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.sidebar a {
+  color: #333;
+  text-decoration: none;
+}
+
+.sidebar a:hover {
+  color: #06c;
+}
+
+.content {
+  flex: 1;
+}
+
+.muted {
+  color: #666;
+  font-style: italic;
+}
+
+.err {
+  color: red;
+}
+
+.stats {
+  margin-bottom: 0.5rem;
+  color: #444;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+
+th {
+  background: #f0f0f0;
+}
