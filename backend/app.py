@@ -2,8 +2,8 @@ from flask import Flask, jsonify, request, send_from_directory, abort
 import os
 import pymysql
 import statistics
+import math
 
-#ngrok.set_auth_token("3AKEvX4qI21UaAB4cX3yxgWk7FM_41AneqQLpQT1pi2P2jNzR")
 app = Flask(__name__)
 
 REACT_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
@@ -11,7 +11,7 @@ REACT_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 @app.after_request
 def cors_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
 
@@ -83,6 +83,154 @@ def get_data():
         "data": data,
         "stats": stats
     })
+
+COUNT_KEYS = ["total_crimes", "crime_count", "count", "total", "value"]
+LABEL_KEYS = ["time_period", "month", "year", "community_area", "primary_type", "day_type", "location_description"]
+
+def to_number(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+def numeric_values(rows, key):
+    return [v for v in (to_number(row.get(key)) for row in rows) if v is not None]
+
+def find_count_key(rows):
+    if not rows:
+        return None
+    first = rows[0]
+    for key in COUNT_KEYS:
+        if key in first:
+            return key
+    for key in first:
+        if to_number(first.get(key)) is not None:
+            return key
+    return None
+
+def row_label(row):
+    for key in LABEL_KEYS:
+        value = row.get(key)
+        if value not in (None, ""):
+            return str(value)
+    for key, value in row.items():
+        if key.lower() in ("id", "index"):
+            continue
+        if to_number(value) is None and value not in (None, ""):
+            return str(value)
+    return "Unknown"
+
+def classify_hypothesis_status(values):
+    if len(values) < 2:
+        return "mixed"
+    avg_value = sum(values) / len(values)
+    if avg_value <= 0:
+        return "mixed"
+    spread = (max(values) - min(values)) / avg_value
+    if spread >= 0.75:
+        return "supported"
+    if spread >= 0.35:
+        return "mixed"
+    return "not_supported"
+
+def summarize_rows(table_key, rows, count_key):
+    if not rows or not count_key:
+        return {
+            "metrics": {},
+            "bullets": ["No data was returned for this view yet."],
+            "conclusion": "There is not enough information to produce a reliable insight."
+        }
+
+    values = numeric_values(rows, count_key)
+    if not values:
+        return {
+            "metrics": {},
+            "bullets": ["No numeric values were found in this view yet."],
+            "conclusion": "There is not enough information to produce a reliable insight."
+        }
+
+    top_row = max(rows, key=lambda row: to_number(row.get(count_key)) or float("-inf"))
+    low_row = min(rows, key=lambda row: to_number(row.get(count_key)) or float("inf"))
+    max_value = int(to_number(top_row.get(count_key)) or 0)
+    min_value = int(to_number(low_row.get(count_key)) or 0)
+    total = sum(values)
+    average = total / len(values)
+    ratio = (max_value / average) if average > 0 else 0
+
+    metrics = {
+        "rows_analyzed": len(rows),
+        "total_count": int(total) if math.isfinite(total) else 0,
+        "average_count": round(average, 2),
+        "highest_label": row_label(top_row),
+        "highest_count": max_value,
+        "lowest_label": row_label(low_row),
+        "lowest_count": min_value,
+    }
+
+    if table_key == "yearly_crimes":
+        ordered = sorted(rows, key=lambda row: to_number(row.get("year")) or float("inf"))
+        if len(ordered) >= 2:
+            first_value = to_number(ordered[0].get(count_key)) or 0
+            last_value = to_number(ordered[-1].get(count_key)) or 0
+            if last_value > first_value:
+                metrics["trend_direction"] = "increased"
+            elif last_value < first_value:
+                metrics["trend_direction"] = "decreased"
+            else:
+                metrics["trend_direction"] = "stayed similar"
+    elif table_key == "community_area_crimes":
+        metrics["top_share_percent"] = round((max_value / total) * 100, 2) if total > 0 else 0
+    elif table_key == "holiday_vs_nonholiday":
+        metrics["difference_between_groups"] = max_value - min_value
+
+    bullets = [
+        f"The highest reported value appears in {metrics['highest_label']} with {max_value} incidents.",
+        f"The lowest reported value appears in {metrics['lowest_label']} with {min_value} incidents.",
+        f"Across {len(rows)} grouped records, the average is {round(average, 2)} incidents."
+    ]
+    conclusion = (
+        "The distribution is uneven across groups, so some times or places clearly require more attention."
+        if ratio >= 1.2
+        else "The distribution across groups is relatively balanced in this slice of the dataset."
+    )
+
+    return {"metrics": metrics, "bullets": bullets, "conclusion": conclusion}
+
+def build_final_summary(payload, base_summary):
+    question = str(payload.get("question") or "").strip()
+    hypothesis = str(payload.get("hypothesis") or "").strip()
+    bullets = list(base_summary["bullets"])
+    conclusion = base_summary["conclusion"]
+
+    if question:
+        bullets.insert(0, f"Question: {question}")
+    if hypothesis:
+        bullets.append(f"Hypothesis checked: {hypothesis}")
+
+    return {"bullets": bullets, "conclusion": conclusion}
+
+def build_insight_response(payload):
+    table_key = payload.get("tableKey")
+    sample_rows = payload.get("sampleRows") or []
+    if not isinstance(sample_rows, list):
+        sample_rows = []
+
+    rows = [row for row in sample_rows if isinstance(row, dict)]
+    count_key = find_count_key(rows)
+    base_summary = summarize_rows(table_key, rows, count_key)
+    values = numeric_values(rows, count_key) if count_key else []
+    summary = build_final_summary(payload, base_summary)
+
+    return {
+        "hypothesis_status": classify_hypothesis_status(values) if values else "mixed",
+        "metrics": base_summary["metrics"],
+        "summary": summary
+    }
+
+@app.route("/api/insights", methods=["POST"])
+def generate_insight():
+    payload = request.get_json(silent=True) or {}
+    return jsonify(build_insight_response(payload))
 
 
 @app.route("/")
