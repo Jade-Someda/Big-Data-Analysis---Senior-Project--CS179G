@@ -1,5 +1,5 @@
 export const TABLE_META = {
-  airport_theft_count_comparison: { //jade
+  airport_theft_count_comparison: { //jade edit
     question: 'How does Airport theft rates compare to other places?',
     hypothesis: ' More theft incidents occur around airports compared to other areas.',
     description: 'Practical for understanding the safety-levels around Airports.',
