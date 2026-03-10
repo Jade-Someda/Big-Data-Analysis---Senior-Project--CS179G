@@ -219,6 +219,157 @@ export default function ChartView({ table, data }) {
     )
   }
 
+  if(table === 'theft_by_location') {
+    const rows = [...data]
+      .map(row => {
+        const crimes = Number(row.total_crimes)
+        const thefts = Number(row.total_thefts)
+
+        return {
+          location: String(row.location_description || 'Unknown'),
+          theft_ratio: crimes ? thefts / crimes : 0
+        }
+        
+
+      })
+      .sort((a, b) => b.theft_ratio - a.theft_ratio)
+      .slice(0, 10)
+    
+    return (
+      <div className="chart-block">
+        <div className="chart-title">Theft ratio by location</div>
+        <div className="chart-wrap">
+          <ResponsiveContainer width="100%" height={290}>
+            <BarChart data={rows} margin={{ top: 20, right: 60, left: 10, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis
+                dataKey="location"
+                angle={-35}
+                textAnchor="end"
+                interval={0}
+                height={80}
+                tick={{ fontSize: 10}}
+              />
+              <YAxis
+                tickFormatter={(v) => `${Math.round(v * 100)}%`}
+              />
+              <Tooltip
+                formatter={(v) => `${(v * 100).toFixed(1)}%`}
+              />
+              <Bar
+                dataKey="theft_ratio"
+                fill="#f59e0b"
+                radius={[6, 6, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    )
+  }
+
+  // if(table === transit_vs_commercial_robbery_count) {      finish, include rates
+  //   const rows = [...data]
+  //     .map(row => ({
+  //       ...row,
+  //       primary_type: String(row.primary_type || 'Unknown'),
+  //       total_num: Number(row.total),
+  //     }))
+  //     .filter(row => Number.isFinite(row.total_num))
+  //     .sort((a, b) => b.total_num - a.total_num)
+  //     .slice(0, 2)
+  // }
+
+  if(table === 'great_recession_by_type') {
+    const rows = [...data]
+      .map(row => ({
+        crime: String(row.primary_type || "Unknown"),
+        total: Number(row.total)
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10) // top crime types
+
+    return (
+      <div className="chart-block">
+        <div className="chart-title">
+          Most common crime types during the Great Recession (2007–2009)
+        </div>
+
+        <div className="chart-wrap">
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart
+              data={rows}
+              margin={{ top: 20, right: 40, left: 10, bottom: 60 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+
+              <XAxis
+                dataKey="crime"
+                angle={-35}
+                interval={0}
+                height={80}
+                tick={{ fontSize: 11 }}
+              />
+
+              <YAxis />
+
+              <Tooltip />
+
+              <Bar
+                dataKey="total"
+                fill="#3b82f6"
+                radius={[6,6,0,0]}
+              />
+
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    )
+  }
+  if (table === 'monthly_crimes') {
+  const monthNames = [
+    'Jan','Feb','Mar','Apr','May','Jun',
+    'Jul','Aug','Sep','Oct','Nov','Dec'
+  ]
+
+  const rows = [...data]
+    .map(row => ({
+      month_num: Number(row.month),
+      total_crimes_num: Number(row.total_crimes),
+      month_label: monthNames[Number(row.month) - 1]
+    }))
+    .filter(row => Number.isFinite(row.month_num) && Number.isFinite(row.total_crimes_num))
+    .sort((a, b) => a.month_num - b.month_num)
+
+  return (
+    <div className="chart-block">
+      <div className="chart-title">Crime trends by month</div>
+
+      <div className="chart-wrap">
+        <ResponsiveContainer width="100%" height={290}>
+          <BarChart data={rows}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+
+            <XAxis dataKey="month_label" />
+
+            <YAxis />
+
+            <Tooltip />
+
+            <Bar
+              dataKey="total_crimes_num"
+              fill="#6366f1"
+              radius={[6,6,0,0]}
+            />
+
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
+
   return (
     <div className="chart-block">
       <div className="chart-title">Visualization</div>
@@ -226,3 +377,4 @@ export default function ChartView({ table, data }) {
     </div>
   )
 }
+

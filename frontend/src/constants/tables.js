@@ -65,6 +65,12 @@ export const TABLE_META = {
     description: 'Annual totals across all crime types, useful for spotting long-term shifts.',
     category: 'Long-term trends',
   },
+  great_recession_by_type: {
+    question: 'Which crime types were most common during the Great Recession?',
+    hypothesis: 'Economic stress during the recession increased property crimes like theft.',
+    description: 'Crime distribution by type between 2007 and 2009.',
+    category: 'Long-term trends',
+  },
   community_area_crimes: {
     question: 'Which community areas see the most reported crime?',
     hypothesis: 'Downtown and dense neighborhoods appear as persistent hotspots.',
@@ -78,6 +84,26 @@ export const TABLE_META = {
     category: 'Seasonality',
   },
 
+  christmas_by_type: {
+    question: 'What crime types increase during Christmas?',
+    hypothesis: 'Property crimes such as theft increase during the Christmas holiday due to increased shopping and travel.',
+    description: 'Examines the distribution of crimes reported during the Christmas holiday period and highlights which offenses are most common.',
+    category: 'Seasonality',
+  },
+
+  halloween_by_type: {
+    question: 'What crime types increase during Halloween?',
+    hypothesis: 'Public disturbances and assault-related crimes increase during Halloween due to large gatherings and nightlife activity.',
+    description: 'Displays crime types reported during the Halloween period, helping identify which incidents are most associated with the holiday.',
+    category: 'Seasonality',
+  },
+
+  holiday_vs_nonholiday_crimes: {
+    question: 'How do crime levels differ between holidays and non-holidays?',
+    hypothesis: 'Crime patterns differ during holidays compared to regular days due to increased travel, gatherings, and nightlife.',
+    description: 'Compares total crime counts on major holidays against typical non-holiday days to determine if holidays correlate with increased or decreased crime activity.',
+    category: 'Seasonality',
+  },
 
 }
 
