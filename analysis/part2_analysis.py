@@ -6,12 +6,59 @@ from pyspark.sql.functions import (
 import time
 from pyspark.sql.window import Window
 from pyspark.sql.functions import row_number
+from pyspark.sql.functions import col, count, regexp_replace, trim, upper #omit if neccesary 
 
 PARQUET_PATH = "/home/cs179g/project/CS179G/clean_chicago_crime"
 JDBC_URL = "jdbc:mysql://127.0.0.1:3306/cs179g"
 JDBC_USER = "root"
 JDBC_PASSWORD = ""
 JDBC_DRIVER = "com.mysql.cj.jdbc.Driver"
+#omit if neccesary
+#--------------------------------------------------------------------------------------------------
+def normalize_location(location_col):
+    n = trim(upper(location_col))
+
+    n = regexp_replace(n, r'\s*/\s*', '/')
+    n = regexp_replace(n, r'\s*-\s*', '-')
+    n = regexp_replace(n, r'\s*\(\s*', ' (')
+    n = regexp_replace(n, r'\s*\)\s*', ')')
+    n = regexp_replace(n, r'\.', '')
+
+    n = regexp_replace(n, r'RESIDENCE PORCH/HALLWAY', 'RESIDENCE-PORCH/HALLWAY')
+    n = regexp_replace(n, r'RESIDENCE-YARD \(FRONT/BACK\)|RESIDENTIAL YARD \(FRONT/BACK\)', 'RESIDENCE-YARD')
+    n = regexp_replace(n, r'VEHICLE NON-COMMERCIAL', 'VEHICLE-NON-COMMERCIAL')
+    n = regexp_replace(n, r'OTHER RAILROAD PROP/TRAIN DEPOT|OTHER RAILROAD PROPERTY/TRAIN DEPOT', 'OTHER RAILROAD/TRAIN DEPOT')
+    n = regexp_replace(n, r'VEHICLE-OTHER RIDE SHARE.*', 'VEHICLE-RIDE SHARE')
+    n = regexp_replace(n, r'AIRPORT TERMINAL.*NON-SECURE.*|AIRPORT TERMINAL MEZZANINE.*', 'AIRPORT TERMINAL-NON-SECURE')
+    n = regexp_replace(n, r'AIRPORT TERMINAL.*SECURE.*', 'AIRPORT TERMINAL-SECURE')
+    n = regexp_replace(n, r'AIRPORT BUILDING NON-TERMINAL.*', 'AIRPORT BUILDING NON-TERMINAL')
+    n = regexp_replace(n, r'AIRPORT EXTERIOR.*|AIRPORT TRANSPORTATION SYSTEM.*', 'AIRPORT EXTERIOR')
+    n = regexp_replace(n, r'AIRPORT PARKING LOT', 'PARKING LOT/GARAGE-NON-RESIDENTIAL')
+    n = regexp_replace(n, r'SCHOOL-PUBLIC BUILDING|SCHOOL-PUBLIC GROUNDS', 'SCHOOL-PUBLIC')
+    n = regexp_replace(n, r'SCHOOL-PRIVATE BUILDING|SCHOOL-PRIVATE GROUNDS', 'SCHOOL-PRIVATE')
+    n = regexp_replace(n, r'VEHICLE-COMMERCIAL-ENTERTAINMENT/PARTY BUS|VEHICLE-COMMERCIAL-TROLLEY BUS|VEHICLE-DELIVERY TRUCK|DELIVERY TRUCK', 'VEHICLE-COMMERCIAL-SPECIALTY')
+    n = regexp_replace(n, r'SAVINGS AND LOAN|CREDIT UNION', 'BANK/CREDIT UNION')
+    n = regexp_replace(n, r'^BANK$', 'BANK/CREDIT UNION')
+    n = regexp_replace(n, r'COIN OPERATED MACHINE|AIRPORT VENDING ESTABLISHMENT|NEWSSTAND', 'VENDING/COIN MACHINE/NEWSSTAND')
+    n = regexp_replace(n, r'APPLIANCE STORE|PAWN SHOP|CLEANING STORE|BARBERSHOP|CAR WASH', 'SPECIALTY RETAIL/SERVICE')
+    n = regexp_replace(n, r'POOL ROOM|BOWLING ALLEY|ATHLETIC CLUB', 'RECREATION FACILITY')
+    n = regexp_replace(n, r'CEMETARY|FOREST PRESERVE|FARM|KENNEL|ANIMAL HOSPITAL|HORSE STABLE', 'NATURE/FARM/ANIMAL FACILITY')
+    n = regexp_replace(n, r'^BOAT/WATERCRAFT$|^AIRCRAFT$', 'BOAT/AIRCRAFT')
+    n = regexp_replace(n, r'FIRE STATION|JAIL/LOCK-UP FACILITY|FEDERAL BUILDING|GOVERNMENT BUILDING/PROPERTY', 'GOVERNMENT FACILITY')
+    n = regexp_replace(n, r'DAY CARE CENTER', 'SCHOOL-OTHER/DAY CARE')
+    n = regexp_replace(n, r'COLLEGE/UNIVERSITY RESIDENCE HALL', 'COLLEGE/UNIVERSITY-GROUNDS')
+    n = regexp_replace(n, r'CTA TRACKS-RIGHT OF WAY|^CTA PLATFORM$', 'CTA PLATFORM/TRACKS')
+    n = regexp_replace(n, r'CTA GARAGE/OTHER PROPERTY', 'CTA PARKING LOT/GARAGE')
+    n = regexp_replace(n, r'DRIVEWAY-RESIDENTIAL', 'RESIDENCE-YARD')
+    n = regexp_replace(n, r'VACANT LOT/LAND|ABANDONED BUILDING', 'ABANDONED BUILDING/VACANT LOT')
+    n = regexp_replace(n, r'OTHER \(SPECIFY\)', 'OTHER')
+
+    return n
+
+#--------------------------------------------------------------------------------------------------
+
+
+
 
 def main():
     start_total = time.time()
@@ -61,32 +108,102 @@ def main():
     write_to_mysql(thanksgiving, "thanksgiving_by_type", spark)
     
 
+    #old sports_by_location -----------------------------------------------------------------
+    # sport_locations_df = df.filter(
+    #         (col("location_description").isNotNull())&
+    #         (col("location_description") != "") &
+    #         (col("location_description").rlike(r"(?i)\bsports?\b"))
+    #         )
+
+    # crimes_sport_locations = sport_locations_df.groupby("location_description", "primary_type").agg(count("*").alias("total_crimes")).orderBy("location_description",col("total_crimes").desc())
+    # write_to_mysql(crimes_sport_locations, "sport_location_crimes", spark)
+    # df_location = df.filter(col("location_description").isNotNull() & (col("location_description") != ""))
+
+    #NEW sports_by_location -----------------------------------------------------------------
     sport_locations_df = df.filter(
-            (col("location_description").isNotNull())&
-            (col("location_description") != "") &
-            (col("location_description").rlike(r"(?i)\bsports?\b"))
-            )
+    (col("location_description").isNotNull()) &
+    (col("location_description") != "") &
+    (col("location_description").rlike(r"(?i)\bsports?\b"))
+    )
 
-    crimes_sport_locations = sport_locations_df.groupby("location_description", "primary_type").agg(count("*").alias("total_crimes")).orderBy("location_description",col("total_crimes").desc())
+    sport_locations_df = sport_locations_df.withColumn(
+    "crime_category",
+    when(col("primary_type").isin("THEFT", "MOTOR VEHICLE THEFT", "BURGLARY"), "Theft")
+    .when(col("primary_type").isin("ASSAULT", "BATTERY"), "Assault & Battery")
+    .when(col("primary_type").isin("ROBBERY", "KIDNAPPING"), "Robbery & Kidnapping")
+    .when(col("primary_type").isin("CRIM SEXUAL ASSAULT", "SEX OFFENSE", "INTIMIDATION", "STALKING"), "Violent Crime")
+    .when(col("primary_type").isin("CRIMINAL DAMAGE", "ARSON"), "Property Damage")
+    .when(col("primary_type").isin("NARCOTICS", "LIQUOR LAW VIOLATION", "PUBLIC INDECENCY", "PROSTITUTION"), "Vice & Substances")
+    .when(col("primary_type").isin("CRIMINAL TRESPASS", "PUBLIC PEACE VIOLATION", "INTERFERENCE WITH PUBLIC OFFICER", "CONCEALED CARRY LICENSE VIOLATION", "WEAPONS VIOLATION"), "Public Order")
+    .when(col("primary_type").isin("DECEPTIVE PRACTICE"), "Fraud & Deception")
+    .when(col("primary_type").isin("OFFENSE INVOLVING CHILDREN"), "Crimes Against Children")
+    .otherwise("Other")
+    )   
+
+    crimes_sport_locations = sport_locations_df.groupby("crime_category").agg(
+    count("*").alias("total_crimes")
+    ).orderBy(col("total_crimes").desc())
+
     write_to_mysql(crimes_sport_locations, "sport_location_crimes", spark)
-    df_location = df.filter(col("location_description").isNotNull() & (col("location_description") != ""))
+
+#-------------------------------------------------------------------------------------
+
+    #OLD THEFT_BY_LOCATION
+    # df_location = df.filter(col("location_description").isNotNull() & (col("location_description") != ""))
+    
+    # theft_counts = df_location.filter(col("primary_type") == "THEFT") \
+    #     .groupBy("location_description") \
+    #     .agg(count("*").alias("total_thefts")) \
+    #     .orderBy(col("total_thefts").desc())
 
 
-    theft_counts = df_location.filter(col("primary_type") == "THEFT") \
-        .groupBy("location_description") \
-        .agg(count("*").alias("total_thefts")) \
+    # total_counts = df_location.groupBy("location_description") \
+    #     .agg(count("*").alias("total_crimes")) \
+    #     .orderBy(col("total_crimes").desc())
+
+    # theft_vs_total = theft_counts.join(total_counts, on="location_description", how="inner")
+
+
+    # write_to_mysql(theft_vs_total, "theft_by_location", spark)
+#-------------------------------------------------------------------------------------
+
+
+
+#NEW theft_by_location --omit if neccesary
+#-------------------------------------------------------------------------------------
+
+
+    df_location = (
+        df
+        .filter(col("location_description").isNotNull() & (col("location_description") != ""))
+        .withColumn("location_normalized", normalize_location(col("location_description")))
+    )
+
+    theft_counts = (
+        df_location
+        .filter(col("primary_type") == "THEFT")
+        .groupBy("location_normalized")
+        .agg(count("*").alias("total_thefts"))
+    )
+
+    total_counts = (
+        df_location
+        .groupBy("location_normalized")
+        .agg(count("*").alias("total_crimes"))
+    )
+
+    theft_vs_total = (
+        theft_counts
+        .join(total_counts, on="location_normalized", how="inner")
+        .withColumnRenamed("location_normalized", "location_description")
         .orderBy(col("total_thefts").desc())
-
-
-    total_counts = df_location.groupBy("location_description") \
-        .agg(count("*").alias("total_crimes")) \
-        .orderBy(col("total_crimes").desc())
-
-    theft_vs_total = theft_counts.join(total_counts, on="location_description", how="inner")
-
+    )
 
     write_to_mysql(theft_vs_total, "theft_by_location", spark)
 
+
+#-------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------
 
     # Read holidays from MySQL holidays table
     holidays_df = spark.read \
@@ -110,13 +227,54 @@ def main():
     yearly_crimes = df.groupBy("year").agg(count("*").alias("total_crimes")).orderBy("year")
     write_to_mysql(yearly_crimes, "yearly_crimes", spark)
 
-    df_location = df.filter(col("location_description").isNotNull() & (col("location_description") != ""))
-    crimes_by_location = df_location.groupBy("location_description").agg(count("*").alias("total_crimes")).orderBy(col("total_crimes").desc())
+#------------------------------------------------------------------------------------------------
+# Omit keywords that are ambigous locations and put them in groupings. So you dont have 10 rows of 'Aparments' etc. 
+    keywords = "(?i).*(FISTS|MOTOR VEHICLE|SCOOTER|NON-VEH|NON-MOTOR VEHICLE|NEW STAND).*"
+
+    #create buckets
+    df_location = df.filter(
+    col("location_description").isNotNull() & 
+    (col("location_description") != "") &
+    ~col("location_description").rlike(keywords)
+    ).withColumn("location_category",
+    when(col("location_description").rlike("(?i)(RESIDENCE|APARTMENT|HOUSE|ROOMING|DRIVEWAY - RES|RESIDENTIAL YARD|RESIDENCE PORCH|RESIDENCE-GARAGE|CHA )"), "Residential")
+    .when(col("location_description").rlike("(?i)(STREET|SIDEWALK|ALLEY|HIGHWAY|EXPRESSWAY|BRIDGE)"), "Street/Outdoors")
+    .when(col("location_description").rlike("(?i)(CTA |TRAIN|RAILROAD|TRANSIT|PLATFORM|SUBWAY|BUS)"), "Public Transit")
+    .when(col("location_description").rlike("(?i)(AIRPORT|AIRCRAFT)"), "Airport")
+    .when(col("location_description").rlike("(?i)(PARKING LOT|PARKING|GARAGE)"), "Parking Lot")
+    .when(col("location_description").rlike("(?i)(SCHOOL|COLLEGE|UNIVERSITY|DAY CARE)"), "Education")
+    .when(col("location_description").rlike("(?i)(RESTAURANT|BAR|TAVERN|NIGHT CLUB|CAFE)"), "Restraunt Area")
+    .when(col("location_description").rlike("(?i)(GROCERY|DRUG STORE|DEPARTMENT STORE|SMALL RETAIL|RETAIL|CONVENIENCE|APPLIANCE|BARBERSHOP)"), "Retail/Stores")
+    .when(col("location_description").rlike("(?i)(BANK|CURRENCY EXCHANGE|CREDIT UNION|SAVINGS|ATM)"), "Financial")
+    .when(col("location_description").rlike("(?i)(HOSPITAL|MEDICAL|DENTAL|NURSING|CLINIC)"), "Medical")
+    .when(col("location_description").rlike("(?i)(PARK|FOREST|LAKEFRONT|BEACH|ATHLETIC|SPORTS|STADIUM|YMCA)"), "Parks/Recreation")
+    .when(col("location_description").rlike("(?i)(HOTEL|MOTEL)"), "Hotel/Lodging")
+    .when(col("location_description").rlike("(?i)(VACANT|ABANDONED|CONSTRUCTION|WAREHOUSE|FACTORY)"), "Vacant/Industrial")
+    .otherwise("Other")
+    )
+
+    #higest crime rate across locations
+    crimes_by_location = df_location.groupBy("location_category") \
+    .agg(count("*").alias("total_crimes")) \
+    .orderBy(col("total_crimes").desc())
     write_to_mysql(crimes_by_location, "crimes_by_location", spark)
 
-    #crimes_by_loc_type = df_location.groupBy("location_description", "primary_type").agg(count("*").alias("total")).orderBy("location_description", col("total").desc())
-    #write_to_mysql(crimes_by_loc_type, "crimes_by_location_and_type", spark)
+    #most common crime per location 
+    crimes_by_location_and_type = df_location.groupBy("location_category", "primary_type") \
+    .agg(count("*").alias("total"))
 
+    location_totals = df_location.groupBy("location_category") \
+    .agg(count("*").alias("location_total"))
+
+    joined = crimes_by_location_and_type.join(location_totals, on="location_category", how="inner")
+
+    windowSpec = Window.partitionBy("location_category").orderBy(col("total").desc())
+    ranked = joined.withColumn("rank", row_number().over(windowSpec))
+
+    top_crime_per_category = ranked.filter(col("rank") == 1).drop("rank")
+    write_to_mysql(top_crime_per_category, "crimes_by_location_and_type", spark)
+    
+#------------------------------------------------------------------------------------------------
 
     location_type_counts = df_location.groupBy("location_description", "primary_type").agg(count("*").alias("total"))
     location_totals = df_location.groupBy("location_description").agg(count("*").alias("location_total"))
@@ -124,8 +282,7 @@ def main():
     joined = location_type_counts.join(location_totals_filtered,on="location_description",how="inner")
     windowSpec = Window.partitionBy("location_description").orderBy(col("total").desc())
     ranked = joined.withColumn("rank",row_number().over(windowSpec))
-    top_crime_per_location = ranked.filter(col("rank") == 1).drop("rank")
-    write_to_mysql(top_crime_per_location, "crimes_by_location", spark) 
+   
     
     df_community = df.filter(col("community_area").isNotNull() & (col("community_area") != ""))
     community_area_crimes = df_community.groupBy("community_area").agg(count("*").alias("total_crimes")).orderBy(col("total_crimes").desc())
@@ -160,7 +317,7 @@ def main():
 
     write_to_mysql(downtown_vs_residential, "downtown_vs_residential_theft_robbery", spark)
 
-    # Public transit locations (train stations, buses) have higher robbery rates than commercial areas.
+    # Public transit locations (train stations, buses) have higher robbery rates than commercial areas. (Jade)
      # 1)filter out rows with invalid columns 
     df_robbery = df.filter((col("primary_type") == "ROBBERY") & col("location_description").isNotNull())
 
@@ -180,8 +337,8 @@ def main():
 
     # More theft incidents occur around airports compared to other areas.
 
-    #1) filter - look for any location_description that contains any word of airport. 
-    #it could be airport, AIRPORT, airport terminal etc. 
+    #1) filter - look for any location_description that contains any word of airport. (Jade)
+    #it could be airport, AIRPORT, airPort terminal etc. 
     theft = df.filter(
     (col("primary_type") == "THEFT") &
     (col("location_description").isNotNull()) 

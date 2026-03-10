@@ -1,3 +1,5 @@
+# EXECUTE FILE (clean data) spark-submit test.py
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, when, trim, lower, try_to_timestamp, lit
 import time
@@ -52,10 +54,15 @@ crime_df = crime_df.withColumn(
 
 crime_df = crime_df.dropDuplicates(["id"])
 
+#additional words to exclude
+keywords = "(?i).*(FISTS|MOTOR VEHICLE|SCOOTER|NON-VEH|NEW STAND).*"
+crime_df = crime_df.filter(~col("location_description").rlike(keywords))
+
 crime_df = crime_df.drop(
         "case_number", "block", "iucr", "beat", "district", "ward",
         "fbi_code", "x_coordinate", "y_coordinate", "updated_on", "location"
 )
+
 crime_df.write \
      .mode("overwrite") \
     .parquet("/home/cs179g/project/CS179G/clean_chicago_crime")
