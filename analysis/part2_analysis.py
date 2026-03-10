@@ -52,6 +52,17 @@ def main():
 
     christmas = df.filter(col("month") == 12).groupBy("primary_type").agg(count("*").alias("total")).orderBy(col("total").desc())
     write_to_mysql(christmas, "christmas_by_type", spark)
+    # theft_df = df.filter(col("primary_type") == "THEFT")
+
+    # december_thefts = theft_df.filter(col("month") == 12).agg(count("*").alias("december_total"))
+    # monthly_thefts = theft_df.groupBy("month").agg(count("*").alias("total_thefts"))
+    # avg_monthly_thefts = monthly_thefts.agg((_sum("total_thefts") / count("*")).alias("avg_per_month"))
+    # christmas_vs_avg_thefts = december_thefts.crossJoin(avg_monthly_thefts).select(
+    #     lit("Christmas Month").alias("day_type"),
+    #     col("december_total").alias("total_thefts"),
+    #     col("avg_per_month")
+    # )
+    # write_to_mysql(christmas_vs_avg_thefts, "christmas_vs_avg_thefts", spark)
 
     halloween = df.filter((col("month") == 10) & (col("day") == 31)).groupBy("primary_type").agg(count("*").alias("total")).orderBy(col("total").desc())
     write_to_mysql(halloween, "halloween_by_type", spark)
