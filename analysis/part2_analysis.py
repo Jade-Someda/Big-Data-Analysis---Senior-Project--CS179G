@@ -124,7 +124,13 @@ def main():
     thanksgiving_dates = ["2022-11-24", "2023-11-23", "2024-11-28", "2021-11-25", "2020-11-26", "2019-11-28"]
     thanksgiving = df.filter(col("date_only").cast("string").isin(thanksgiving_dates)).groupBy("primary_type").agg(count("*").alias("total")).orderBy(col("total").desc())
     write_to_mysql(thanksgiving, "thanksgiving_by_type", spark)
-    
+
+    from pyspark.sql.functions import regexp_replace, trim
+
+    df = df.withColumn(
+        "location_description",
+        trim(regexp_replace(col("location_description"), r"\s*/\s*", "/"))
+    )
 
     sport_locations_df = df.filter(
             (col("location_description").isNotNull())&
