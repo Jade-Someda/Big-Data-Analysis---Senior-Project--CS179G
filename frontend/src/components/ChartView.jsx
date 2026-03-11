@@ -79,6 +79,154 @@ export default function ChartView({ table, data }) {
       </div>
     )
   }
+  if (table === 'sport_location_crimes') {
+    const rows = [...data]
+      .map(row => ({
+        crime: String(row.primary_type || "Unknown"),
+        total: Number(row.total_crimes)
+      }))
+      .filter(row => Number.isFinite(row.total))
+      .sort((a, b) => b.total - a.total)
+      .slice(0,15)
+  
+    return (
+      <div className="chart-block">
+        <div className="chart-title">
+          Crime types at sports arenas and stadiums
+        </div>
+  
+        <div className="chart-wrap">
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart
+              layout="vertical"
+              data={rows}
+              margin={{ top: 10, right: 10, left: -40, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+  
+              <XAxis
+                type="number"
+                tick={{ fontSize: 11 }}
+              />
+  
+              <YAxis
+                type="category"
+                dataKey="crime"
+                width={180}
+                tick={{ fontSize: 11 }}
+              />
+  
+              <Tooltip />
+  
+              <Bar
+                dataKey="total"
+                fill="#ef4444"
+                radius={[0,6,6,0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    )
+  }
+
+  if (table === "downtown_vs_residential_theft_robbery") {
+    const rows = [...data].map(row => ({
+      area: String(row.area_type),
+      rate: Number(row.rate),
+      total: Number(row.total_crimes),
+      tr: Number(row.tr_crimes)
+    }));
+  
+    return (
+      <div className="chart-block">
+        <div className="chart-title">
+          Theft and Robbery Rate: Downtown vs Residential Areas
+        </div>
+  
+        <div className="chart-wrap">
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart
+              data={rows}
+              margin={{ top: 20, right: 40, left: 20, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+  
+              <XAxis
+                dataKey="area"
+                tick={{ fontSize: 12 }}
+              />
+  
+              <YAxis
+                tickFormatter={(v) => (v * 100).toFixed(0) + "%"}
+              />
+  
+              <Tooltip
+                formatter={(v) => (v * 100).toFixed(1) + "%"}
+                labelFormatter={(label) => `${label} Area`}
+              />
+  
+              <Bar
+                dataKey="rate"
+                fill="#ef4444"
+                radius={[6,6,0,0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  }
+  if (table === "crimes_by_location_and_type") {
+    const rows = [...data]
+      .map(row => ({
+        location: String(row.location_category),
+        crime: String(row.primary_type),
+        total: Number(row.total)
+      }))
+      .sort((a, b) => b.total - a.total);
+  
+    return (
+      <div className="chart-block">
+        <div className="chart-title">
+          Most Common Crime Type by Location Category
+        </div>
+  
+        <div className="chart-wrap">
+          <ResponsiveContainer width="100%" height={420}>
+            <BarChart
+              data={rows}
+              layout="vertical"
+              margin={{ top: 20, right: 10, left: -40, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+  
+              <XAxis type="number" />
+  
+              <YAxis
+                type="category"
+                dataKey="location"
+                width={140}
+                tick={{ fontSize: 11 }}
+              />
+  
+              <Tooltip
+                formatter={(value, name, props) =>
+                  [`${value.toLocaleString()} crimes`, props.payload.crime]
+                }
+              />
+  
+              <Bar
+                dataKey="total"
+                fill="#6366f1"
+                radius={[0,6,6,0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  }
 
   if (table === 'time_period_crimes') {
     const rows = [...data]
