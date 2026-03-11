@@ -82,7 +82,7 @@ export default function ChartView({ table, data }) {
   if (table === 'sport_location_crimes') {
   const rows = [...data]
     .map(row => ({
-      crime: String(row.crime_category || "Unknown"), // <-- use crime_category
+      crime: String(row.crime_category || "Unknown"), 
       total: Number(row.total_crimes)
     }))
     .filter(row => Number.isFinite(row.total))
@@ -100,7 +100,7 @@ export default function ChartView({ table, data }) {
           <BarChart
             layout="vertical"
             data={rows}
-            margin={{ top: 10, right: 10, left: -50, bottom: 10 }} // increased left for label space
+            margin={{ top: 10, right: 10, left: -50, bottom: 10 }} 
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
@@ -227,7 +227,6 @@ export default function ChartView({ table, data }) {
   }
 
   if (table === 'time_period_crimes') {
-  // Map each period to the number of hours
   const hoursPerPeriod = {
     'Overnight': 8, // 12AM–7:59AM
     'Daytime': 8,   // 8AM–3:59PM
@@ -264,9 +263,8 @@ export default function ChartView({ table, data }) {
   const rows = [...data]
     .map(row => {
       let days = 1;
-      if (row.day_type === 'Holiday') days = 11 * 20;       // 220 holiday days
-      else if (row.day_type === 'Non-Holiday') days = 365 * 20 - 220; // 7080 non-holiday days
-
+      if (row.day_type === 'Holiday') days = 11 * 20;       
+      else if (row.day_type === 'Non-Holiday') days = 365 * 20 - 220; 
       return {
         day_type: String(row.day_type || 'Unknown'),
         avg_crimes_per_day: Number(row.total_crimes) / days,
@@ -349,7 +347,7 @@ export default function ChartView({ table, data }) {
 
 if (table === 'thanksgiving_vs_nonthanksgiving_by_type') {
 
-  const THANKSGIVING_DAYS = 1 * 20;       // 1 day per year × 25 years
+  const THANKSGIVING_DAYS = 1 * 20;      
   const NON_THANKSGIVING_DAYS = (365 - 1) * 20;
 
   const crimeTypes = ["BATTERY", "THEFT", "CRIMINAL DAMAGE", "ASSAULT"];
@@ -477,7 +475,7 @@ if (table === 'crimes_by_location') {
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
-            {/* X-axis is now the total crime scale */}
+            {/* X-axis is the total crime scale */}
             <XAxis type="number" tick={{ fontSize: 12 }} />
 
             {/* Y-axis shows categories on the left */}
@@ -555,9 +553,9 @@ if (table === 'season_crimes') {
       <div className="chart-wrap">
         <ResponsiveContainer width="100%" height={320}>
           <BarChart
-            layout="vertical"   // <-- make it horizontal
+            layout="vertical"   
             data={rows}
-            margin={{ top: 10, right: 10, left: 120, bottom: 10 }} // extra left space for labels
+            margin={{ top: 10, right: 10, left: 120, bottom: 10 }} 
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
@@ -570,7 +568,7 @@ if (table === 'season_crimes') {
             />
 
             <Tooltip
-              formatter={(value) => (value * 100).toFixed(2) + '%'} // show theft rate as %
+              formatter={(value) => (value * 100).toFixed(2) + '%'} 
             />
 
             <Bar
@@ -585,17 +583,7 @@ if (table === 'season_crimes') {
   )
 }
 
-  // if(table === transit_vs_commercial_robbery_count) {      finish, include rates
-  //   const rows = [...data]
-  //     .map(row => ({
-  //       ...row,
-  //       primary_type: String(row.primary_type || 'Unknown'),
-  //       total_num: Number(row.total),
-  //     }))
-  //     .filter(row => Number.isFinite(row.total_num))
-  //     .sort((a, b) => b.total_num - a.total_num)
-  //     .slice(0, 2)
-  // }
+
 
   if (table === 'great_recession_by_type') {
     const rows = [...data]
@@ -695,7 +683,6 @@ if (table === 'christmas_vs_nonchristmas_by_type') {
   const CHRISTMAS_DAYS = 31;
   const NON_CHRISTMAS_DAYS = 365 - 31;
 
-  // Transform data into grouped chart format
   const crimeTypes = ["THEFT", "BURGLARY", "ROBBERY"];
   const groupedData = crimeTypes.map(type => {
     const christmasRow = data.find(
@@ -740,10 +727,9 @@ if (table === 'christmas_vs_nonchristmas_by_type') {
 }
 
 if (table === 'halloween_vs_nonhalloween_by_type') {
-  const HALLOWEEN_DAYS = 1 * 20;       // 1 day per year × 20 years
-  const NON_HALLOWEEN_DAYS = (365 - 1) * 20; // rest of days × 20 years
+  const HALLOWEEN_DAYS = 1 * 20;     
+  const NON_HALLOWEEN_DAYS = (365 - 1) * 20; 
 
-  // Focus on top 3 public disturbance / assault crimes
   const crimeTypes = ["ASSAULT", "BATTERY", "PUBLIC PEACE VIOLATION"];
 
   const groupedData = crimeTypes.map(type => {
@@ -819,11 +805,10 @@ if (table === 'transit_vs_commercial_robbery_count') {
   )
 }
   if (table === 'season_crimes') {
-  // Map each season to number of months it represents
   const monthsPerSeason = {
     "Summer": 3,
     "Late Winter": 2,
-    "Other": 7, // remaining months
+    "Other": 7,
     "Unknown": 1,
   };
 
