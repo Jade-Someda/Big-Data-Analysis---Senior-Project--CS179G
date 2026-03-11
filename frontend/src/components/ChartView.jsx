@@ -410,68 +410,6 @@ if (table === 'thanksgiving_vs_nonthanksgiving_by_type') {
   );
 }
 
-<<<<<<< HEAD
-if (table === 'season_crimes') {
-  const rows = [...data]
-    .map(row => ({
-      ...row,
-      season: String(row.season || 'Unknown'),
-      total_crimes_num: Number(row.total_crimes),
-    }))
-    .filter(row => Number.isFinite(row.total_crimes_num))
-    .sort((a, b) => b.total_crimes_num - a.total_crimes_num)
-
-  return (
-      <div className="chart-block">
-        <div className="chart-title">Crime volume by season</div>
-        <div className="chart-wrap">
-          <ResponsiveContainer width="100%" height={290}>
-            <BarChart data={rows}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="season" />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="total_crimes_num" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    )
-  }
-
-  if (table === 'theft_by_location') {
-    const rows = [...data]
-      .map(row => ({
-        location: String(row.location_description || 'Unknown'),
-        theft_rate: Number(row.total_thefts) / Number(row.total_crimes || 1),
-      }))
-      .filter(row => Number.isFinite(row.theft_rate))
-      .sort((a, b) => b.theft_rate - a.theft_rate)
-      .slice(0, 10)
-  
-    return (
-      <div className="chart-block">
-        <div className="chart-title">Theft rate by location</div>
-  
-        <div className="chart-wrap">
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={rows}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="location" />
-              <YAxis />
-              <Tooltip />
-              <Bar
-                dataKey="theft_rate"
-                fill="#f59e0b"
-                radius={[6, 6, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    )
-  }
-=======
 if (table === 'airport_theft_count_comparison') {
   const rows = [...data]
     .map(row => ({
@@ -659,7 +597,6 @@ if (table === 'season_crimes') {
   //     .slice(0, 2)
   // }
 
->>>>>>> c07593f (Worked on normalizing data for visuals)
   if (table === 'great_recession_by_type') {
     const rows = [...data]
       .map(row => ({
