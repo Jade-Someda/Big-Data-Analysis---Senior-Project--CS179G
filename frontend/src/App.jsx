@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import ChartView from './components/ChartView'
 import InsightCard from './components/InsightCard'
 import { TABLE_META } from './constants/tables'
 
 function buildNotesText(title, notes) {
-  const lines = [`# ${title}`]
+  const lines = [`Notes for: ${title}`]
   notes.forEach(item => {
     const createdTime = new Date(item.createdAt).toLocaleString()
     lines.push('')
-    lines.push(`## Note from ${createdTime}`)
+    lines.push(`Note from ${createdTime}`)
     if (item.hypothesisStatus) {
       lines.push(`Hypothesis status: ${item.hypothesisStatus}`)
     }
@@ -37,7 +37,6 @@ export default function App() {
   const [stats, setStats] = useState({})
   const [loadingData, setLoadingData] = useState(false)
   const [error, setError] = useState(null)
-  const mainRef = useRef(null)
 
   const [insights, setInsights] = useState([])
   const [insightsLoading, setInsightsLoading] = useState(false)
@@ -72,7 +71,7 @@ export default function App() {
       .finally(() => setLoadingData(false))
   }, [selectedTable])
 
-  const selectedMeta = useMemo(() => {
+  const selectedMeta = (() => {
     if (!selectedTable) return null
     const meta = TABLE_META[selectedTable] || {}
     return {
@@ -81,12 +80,9 @@ export default function App() {
       description: meta.description || null,
       category: meta.category || null,
     }
-  }, [selectedTable, selectedLabel])
+  })()
 
-  const currentInsights = useMemo(
-    () => insights.filter(item => item.tableKey === selectedTable),
-    [insights, selectedTable]
-  )
+  const currentInsights = insights.filter(item => item.tableKey === selectedTable)
 
   const normalizedSearch = searchTerm.trim().toLowerCase()
 
@@ -96,7 +92,7 @@ export default function App() {
     setSearchTerm('')
     setInsightsError(null)
     setSelectedInsightId(null)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo(0, 0)
   }
 
   async function handleGenerateInsight() {
@@ -110,7 +106,7 @@ export default function App() {
         body: JSON.stringify({
           tableKey: selectedTable,
           stats,
-          sampleRows: Array.isArray(data) ? data.slice(0, 50) : [],
+          sampleRows: Array.isArray(data) ? data : [],
           question: selectedMeta?.title || selectedLabel || selectedTable,
           hypothesis: selectedMeta?.hypothesis || null,
         }),
@@ -153,19 +149,7 @@ export default function App() {
     const headerTitle = selectedMeta ? selectedMeta.title : selectedLabel || selectedTable
     const text = buildNotesText(headerTitle, currentInsights)
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text)
-      } else {
-        const blob = new Blob([text], { type: 'text/plain' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = 'crime-insights.txt'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-      }
+      await navigator.clipboard.writeText(text)
       setInsightsError(null)
     } catch (e) {
       setInsightsError('We could not copy your notes. You can still select and copy them manually.')
@@ -283,11 +267,6 @@ export default function App() {
                           onClick={() => {
                             setSelectedTable(table)
                             setSelectedLabel(label)
-                            if (mainRef.current) {
-                              const rect = mainRef.current.getBoundingClientRect()
-                              const offset = window.scrollY + rect.top - 180
-                              window.scrollTo({ top: offset, behavior: 'smooth' })
-                            }
                           }}
                         >
                           <span className="sidebar-link-label">
@@ -306,7 +285,7 @@ export default function App() {
           })}
         </aside>
 
-        <main className="shell-main" ref={mainRef}>
+        <main className="shell-main">
           {!selectedTable && (
             <section className="panel">
               <div className="intro-grid">

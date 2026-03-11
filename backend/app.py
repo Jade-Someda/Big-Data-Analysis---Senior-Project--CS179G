@@ -34,9 +34,10 @@ CATEGORIES = {
         "Monthly Crimes": "monthly_crimes",
         "Season Crimes": "season_crimes",
         "Holiday vs Non-Holiday": "holiday_vs_nonholiday",
-        "Christmas": "christmas_by_type",
+        # "Christmas": "christmas_by_type",
+        "Christmas": "christmas_vs_nonchristmas_by_type",
         "Thanksgiving": "thanksgiving_by_type",
-        "Halloween": "halloween_by_type"
+        "Halloween": "halloween_vs_nonhalloween_by_type"
     },
     "Location-Based / Spatial": {
         "Crimes by Location": "crimes_by_location",
@@ -52,10 +53,18 @@ CATEGORIES = {
     "Long-Term Trends": {
         "Yearly Crimes": "yearly_crimes",
         "Great Recession by Type": "great_recession_by_type"
-    }
+}
 }
 
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-001", temperature=0.2, api_key="AIzaSyAB-Q80vl1NLrLG3btzsfR1xr5mq7oioEk")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+llm = None
+if GEMINI_API_KEY:
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        temperature=0.2,
+        api_key=GEMINI_API_KEY,
+    )
 
 insight_prompt = ChatPromptTemplate.from_messages(
     [
@@ -101,6 +110,21 @@ def query_table(table_name):
         raise
 
 ALLOWED_TABLES = {t for items in CATEGORIES.values() for t in items.values()}
+
+
+def get_insight_rows(payload):
+    """Use full table data when tableKey is valid; otherwise fall back to payload sampleRows."""
+    table_key = payload.get("tableKey")
+    if table_key and table_key in ALLOWED_TABLES:
+        try:
+            return query_table(table_key)
+        except Exception as e:
+            print(f"Could not fetch full table {table_key} for insights: {e}")
+    sample_rows = payload.get("sampleRows") or []
+    if not isinstance(sample_rows, list):
+        sample_rows = []
+    return [row for row in sample_rows if isinstance(row, dict)]
+
 
 @app.route("/api/categories")
 def get_categories():
@@ -160,33 +184,20 @@ def row_label(row):
             return str(value)
     return "Unknown"
 
-def classify_hypothesis_status(values):
-    if len(values) < 2:
-        return "mixed"
-    avg_value = sum(values) / len(values)
-    if avg_value <= 0:
-        return "mixed"
-    spread = (max(values) - min(values)) / avg_value
-    if spread >= 0.75:
-        return "supported"
-    if spread >= 0.35:
-        return "mixed"
-    return "not_supported"
-
 def summarize_rows(table_key, rows, count_key):
     if not rows or not count_key:
         return {
             "metrics": {},
-            "bullets": ["No data was returned for this view yet."],
-            "conclusion": "There is not enough information to produce a reliable insight."
+            "bullets": ["There is not enough data to say anything meaningful here."],
+            "conclusion": "Not enough information to draw a clear conclusion."
         }
 
     values = numeric_values(rows, count_key)
     if not values:
         return {
             "metrics": {},
-            "bullets": ["No numeric values were found in this view yet."],
-            "conclusion": "There is not enough information to produce a reliable insight."
+            "bullets": ["This view does not contain numeric values that can be summarized."],
+            "conclusion": "Not enough numeric information to draw a clear conclusion."
         }
 
     top_row = max(rows, key=lambda row: to_number(row.get(count_key)) or float("-inf"))
@@ -207,115 +218,79 @@ def summarize_rows(table_key, rows, count_key):
         "lowest_count": min_value,
     }
 
-    if table_key == "yearly_crimes":
-        ordered = sorted(rows, key=lambda row: to_number(row.get("year")) or float("inf"))
-        if len(ordered) >= 2:
-            first_value = to_number(ordered[0].get(count_key)) or 0
-            last_value = to_number(ordered[-1].get(count_key)) or 0
-            if last_value > first_value:
-                metrics["trend_direction"] = "increased"
-            elif last_value < first_value:
-                metrics["trend_direction"] = "decreased"
-            else:
-                metrics["trend_direction"] = "stayed similar"
-    elif table_key == "community_area_crimes":
-        metrics["top_share_percent"] = round((max_value / total) * 100, 2) if total > 0 else 0
-    elif table_key == "holiday_vs_nonholiday":
-        metrics["difference_between_groups"] = max_value - min_value
-
     bullets = [
-        f"The highest reported value appears in {metrics['highest_label']} with {max_value} incidents.",
-        f"The lowest reported value appears in {metrics['lowest_label']} with {min_value} incidents.",
-        f"Across {len(rows)} grouped records, the average is {round(average, 2)} incidents."
+        f"The largest value is {max_value} for {metrics['highest_label']}.",
+        f"The smallest value is {min_value} for {metrics['lowest_label']}.",
+        f"Average across the {len(rows)} groups is about {round(average, 2)}."
     ]
-    conclusion = (
-        "The distribution is uneven across groups, so some times or places clearly require more attention."
-        if ratio >= 1.2
-        else "The distribution across groups is relatively balanced in this slice of the dataset."
-    )
+
+    if ratio >= 1.2:
+        conclusion = "Some groups clearly stand out compared to the rest."
+    else:
+        conclusion = "The values across groups are fairly similar overall."
 
     return {"metrics": metrics, "bullets": bullets, "conclusion": conclusion}
-
-def build_final_summary(payload, base_summary):
-    question = str(payload.get("question") or "").strip()
-    hypothesis = str(payload.get("hypothesis") or "").strip()
-    bullets = list(base_summary["bullets"])
-    conclusion = base_summary["conclusion"]
-
-    if question:
-        bullets.insert(0, f"Question: {question}")
-    if hypothesis:
-        bullets.append(f"Hypothesis checked: {hypothesis}")
-
-    return {"bullets": bullets, "conclusion": conclusion}
-
-def build_insight_response(payload):
-    table_key = payload.get("tableKey")
-    sample_rows = payload.get("sampleRows") or []
-    if not isinstance(sample_rows, list):
-        sample_rows = []
-
-    rows = [row for row in sample_rows if isinstance(row, dict)]
-    count_key = find_count_key(rows)
-    base_summary = summarize_rows(table_key, rows, count_key)
-    values = numeric_values(rows, count_key) if count_key else []
-    summary = build_final_summary(payload, base_summary)
-
-    return {
-        "hypothesis_status": classify_hypothesis_status(values) if values else "mixed",
-        "metrics": base_summary["metrics"],
-        "summary": summary
-    }
-
-@app.route("/api/insights", methods=["POST"])
-def generate_insight():
-    payload = request.get_json(silent=True) or {}
-    return jsonify(build_insight_response(payload))
 
 
 def build_llm_insight_response(payload):
     table_key = payload.get("tableKey")
-    sample_rows = payload.get("sampleRows") or []
-    if not isinstance(sample_rows, list):
-        sample_rows = []
-    rows = [row for row in sample_rows if isinstance(row, dict)]
+    rows = get_insight_rows(payload)
     count_key = find_count_key(rows)
     base_summary = summarize_rows(table_key, rows, count_key)
     question = payload.get("question") or ""
     hypothesis = payload.get("hypothesis") or ""
-    msg = insight_prompt.format_messages(
-        table_key=table_key,
-        question=question,
-        hypothesis=hypothesis,
-        sample_rows=json.dumps(sample_rows)[:4000],
-        metrics=json.dumps(base_summary["metrics"]),
-    )
+    if llm is None:
+        print("LLM not configured: GEMINI_API_KEY is missing.")
+        return {"error": "LLM not configured. Set GEMINI_API_KEY to generate insights."}, 503
+
     try:
+        # Send full table to LLM, truncated to fit context window
+        sample_for_llm = json.dumps(rows)[:12000]
+        msg = insight_prompt.format_messages(
+            table_key=table_key,
+            question=question,
+            hypothesis=hypothesis,
+            sample_rows=sample_for_llm,
+            metrics=json.dumps(base_summary["metrics"]),
+        )
+
         raw = llm.invoke(msg)
+        content = raw.content if isinstance(raw.content, str) else str(raw.content)
+
+        if "```" in content:
+            content = content.replace("```json", "").replace("```", "").strip()
+
         try:
-            data = json.loads(raw.content)
+            data = json.loads(content)
+            bullets = data.get("bullets", [])
+            conclusion = data.get("conclusion", "")
+            status = data.get("hypothesis_status", "mixed")
         except Exception:
-            data = {
-                "hypothesis_status": "mixed",
-                "bullets": [raw.content],
-                "conclusion": "The model response could not be parsed as structured JSON.",
-            }
+            print("Could not parse LLM response as JSON, using raw text instead.")
+            bullets = [content.strip()] if content.strip() else []
+            conclusion = ""
+            status = "mixed"
+
         return {
-            "hypothesis_status": data.get("hypothesis_status", "mixed"),
+            "hypothesis_status": status,
             "metrics": base_summary["metrics"],
             "summary": {
-                "bullets": data.get("bullets", []),
-                "conclusion": data.get("conclusion", ""),
+                "bullets": bullets,
+                "conclusion": conclusion,
             },
         }
-    except Exception:
-        return build_insight_response(payload)
+    except Exception as e:
+        print(f"LLM call failed: {e}")
+        return {"error": "Could not generate insight. The LLM request failed."}, 503
 
 
 @app.route("/api/insights_llm", methods=["POST"])
 def generate_llm_insight():
     payload = request.get_json(silent=True) or {}
-    return jsonify(build_llm_insight_response(payload))
+    result = build_llm_insight_response(payload)
+    if isinstance(result, tuple):
+        return jsonify(result[0]), result[1]
+    return jsonify(result)
 
 
 @app.route("/")

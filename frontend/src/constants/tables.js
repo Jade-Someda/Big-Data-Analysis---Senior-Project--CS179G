@@ -3,7 +3,13 @@ export const TABLE_META = {
     question: 'How does Airport theft rates compare to other places?',
     hypothesis: ' More theft incidents occur around airports compared to other areas.',
     description: 'Practical for understanding the safety-levels around Airports.',
-    category: 'Location-Based/ Spatial',
+    category: 'Location-Based / Spatial',
+  },
+  community_area_crimes: {
+    question: 'Which specific community areas see the most reported crime?',
+    hypothesis: 'Downtown and dense neighborhoods appear as persistent hotspots.',
+    description: 'Crimes aggregated by community area; pairs well with map visualizations.',
+    category: 'Location & spatial patterns',
   },
   community_area_crimes: {
     question: 'Which specific community areas see the most reported crime?',
@@ -14,37 +20,38 @@ export const TABLE_META = {
   crimes_by_location:{ //jade
     question: 'What areas types have the higheset crime rate?',
     description: ' The table below illustrates compares the primary crime to the total amount of crime per location, to provide the relative context.',
-    category: 'Location-Based/ Spatial',
+    category: 'Location-Based / Spatial',
   },
   crimes_by_location_and_type:{ //jade
     question: 'What are the most common crimes for each location?',
     description: 'Understand the correlation between location and crime.',
-    category: 'Location-Based/ Spatial',
+    category: 'Location-Based / Spatial',
   },
   downtown_vs_residential_theft_robbery: //jade
   {
     question: 'Hypothesis: Downtown vs Residential',
     hypothesis: 'Downtown areas have higher rates of theft and robbery than residential areas.',
     description: 'Comparison of crime rates between the Downtown and Residential Areas.',
-    category: 'Location-Based/ Spatial',
+    category: 'Location-Based / Spatial',
   },
   sport_location_crimes:{ //jade
     question: 'Hypothesis: Sports Areas Common Crimes',
     hypothesis: 'Assault and battery incidents are the most common crime during major sporting events',
     description: 'The data below illustrates what incidents are most common at sporting areas/events.',
-    category:'Location-Based/ Spatial'
+    category:'Location-Based / Spatial'
   },
-  theft_by_location: { //jade  /not sure of original question? READ ME 
-    question:'What are the crimes and theft rates in different locations?',
-    description: 'The information below illustrates crime trends across locations', 
-    category: 'Location-Based/ Spatial'
+  theft_by_location: { 
+    question:'What are the crimes and theft rates in different locations?', 
+    hypothesis: 'Public transit areas have overall higher theft counts',
+    description: 'Compares total theft indicents across different location descriptions', 
+    category: 'Location-Based / Spatial'
   },
-  transit_vs_commercial_robbery_count://jade
+  transit_vs_commercial_robbery_count:
   { 
-    question:'Hypothesis: Transit v.s Commercial',
-    hypothesis:'Public transit locations have higher robbery rates than commercial areas.', //not sure of original question?
-    description: 'Transit locations include but are not limited to: Bus, Trains, Stations, etc. Commercial areas include but are not limited to: Stores, Shop, Market, etc. ', //ADD DESCRIPTION
-    category: 'Location-Based/ Spatial'
+    question:'Hypothesis: Transit v.s Commercial: Where do robberies occur more?',
+    hypothesis:'Public transit locations have higher robbery rates than commercial areas.', 
+    description: 'Transit locations include but are not limited to: Bus, Trains, Stations, etc. Commercial areas include but are not limited to: Stores, Shop, Market, etc. ', 
+    category: 'Location-Based / Spatial'
   },
 
   hourly_crimes: {
@@ -71,7 +78,19 @@ export const TABLE_META = {
     description: 'Annual totals across all crime types, useful for spotting long-term shifts.',
     category: 'Long-term trends',
   },
-  
+  great_recession_by_type: {
+    question: 'Which crime types were most common during the Great Recession?',
+    hypothesis: 'Economic stress during the recession increased property crimes like theft.',
+    description: 'Crime distribution by type between 2007 and 2009.',
+    category: 'Long-term trends',
+  },
+
+  community_area_crimes: {
+    question: 'Which community areas see the most reported crime?',
+    hypothesis: 'Downtown and dense neighborhoods appear as persistent hotspots.',
+    description: 'Crimes aggregated by community area; pairs well with map visualizations.',
+    category: 'Location-Based / Spatial',
+  },
   thanksgiving_by_type: {
     question: 'What crime types rise during Thanksgiving?',
     hypothesis: 'Certain crime types spike during the Thanksgiving holiday period.',
@@ -84,7 +103,26 @@ export const TABLE_META = {
   description: 'Crime totals aggregated by season (Summer, Late Winter, Other) to identify seasonal patterns.',
   category: 'Seasonality',
   },
+  christmas_vs_nonchristmas_by_type: {
+    question: 'What crime types increase during Christmas?',
+    hypothesis: 'Property crimes such as theft increase during the Christmas holiday due to increased shopping and travel.',
+    description: 'Examines the distribution of crimes reported during the Christmas holiday period and highlights which offenses are most common.',
+    category: 'Seasonality',
+  },
 
+  halloween_vs_nonhalloween_by_type: {
+    question: 'What crime types increase during Halloween?',
+    hypothesis: 'Public disturbances and assault-related crimes increase during Halloween due to large gatherings and nightlife activity.',
+    description: 'Displays crime types reported during the Halloween period, helping identify which incidents are most associated with the holiday.',
+    category: 'Seasonality',
+  },
+
+  holiday_vs_nonholiday: {
+    question: 'How do crime levels differ between holidays and non-holidays?',
+    hypothesis: 'Crime patterns differ during holidays compared to regular days due to increased travel, gatherings, and nightlife.',
+    description: 'Compares total crime counts on major holidays against typical non-holiday days to determine if holidays correlate with increased or decreased crime activity.',
+    category: 'Seasonality',
+  },
 
 }
 
