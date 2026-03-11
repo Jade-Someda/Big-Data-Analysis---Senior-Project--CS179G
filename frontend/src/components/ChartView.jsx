@@ -487,7 +487,35 @@ if (table === 'halloween_vs_nonhalloween_by_type') {
     </div>
   );
 }
+  
+if (table === 'transit_vs_commercial_robbery_count') {
+  const rows = [...data]
+    .map(row => ({
+      ...row,
+      location_type: String(row.location_type || 'Unknown'),
+      robbery_count_num: Number(row.robbery_count),
+      total_crimes_num: Number(row.total_crimes),
+      robbery_rate_num: Number(row.robbery_rate),
+    }))
+    .filter(row => Number.isFinite(row.robbery_rate_num))
 
+  return (
+    <div className="chart-block">
+      <div className="chart-title">Robbery rate: Transit vs Commercial</div>
+      <div className="chart-wrap">
+        <ResponsiveContainer width="100%" height={290}>
+          <BarChart data={rows}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="location_type" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="robbery_rate_num" fill="#ef4444" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
 
 
   return (
