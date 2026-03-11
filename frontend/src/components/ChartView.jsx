@@ -329,47 +329,50 @@ export default function ChartView({ table, data }) {
   //     .slice(0, 2)
   // }
 
-  if(table === 'great_recession_by_type') {
+  if (table === 'great_recession_by_type') {
     const rows = [...data]
       .map(row => ({
         crime: String(row.primary_type || "Unknown"),
         total: Number(row.total)
       }))
+      .filter(row => Number.isFinite(row.total))
       .sort((a, b) => b.total - a.total)
-      .slice(0, 10) // top crime types
-
+      .slice(0, 10)
+  
     return (
       <div className="chart-block">
         <div className="chart-title">
           Most common crime types during the Great Recession (2007–2009)
         </div>
-
+  
         <div className="chart-wrap">
           <ResponsiveContainer width="100%" height={320}>
             <BarChart
+              layout="vertical"
               data={rows}
-              margin={{ top: 20, right: 40, left: 10, bottom: 60 }}
+              margin={{ top: 10, right: 10, left: -75, bottom: 10 }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+  
               <XAxis
-                dataKey="crime"
-                angle={-35}
-                interval={0}
-                height={80}
+                type="number"
                 tick={{ fontSize: 11 }}
               />
-
-              <YAxis />
-
+  
+              <YAxis
+                type="category"
+                dataKey="crime"
+                width={220}
+                tick={{ fontSize: 11 }}
+              />
+  
               <Tooltip />
-
+  
               <Bar
                 dataKey="total"
                 fill="#3b82f6"
-                radius={[6,6,0,0]}
+                radius={[0, 6, 6, 0]}
               />
-
             </BarChart>
           </ResponsiveContainer>
         </div>
