@@ -120,3 +120,17 @@ CREATE TABLE IF NOT EXISTS airport_theft_count_comparison (
     theft_count BIGINT,
     PRIMARY KEY (location_type)
 );
+
+CREATE TABLE IF NOT EXISTS christmas_vs_nonchristmas_by_type (
+    day_type VARCHAR(20),
+    primary_type VARCHAR(100),
+    total BIGINT,
+    PRIMARY KEY (day_type, primary_type)
+);
+
+CREATE TABLE IF NOT EXISTS halloween_vs_nonhalloween_by_type (
+    day_type VARCHAR(20),        
+    primary_type VARCHAR(100),  
+    total BIGINT,        
+    PRIMARY KEY (day_type, primary_type)
+);
