@@ -238,47 +238,78 @@ export default function ChartView({ table, data }) {
     )
   }
 
-  if(table === 'theft_by_location') {
+  const renderWrappedTick = ({ x, y, payload }) => {
+    const words = payload.value.split(" ")
+  
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={16}
+          textAnchor="middle"
+          fill="#666"
+          fontSize={10}
+        >
+          {words.map((word, i) => (
+            <tspan key={i} x="0" dy={i === 0 ? 0 : 12}>
+              {word}
+            </tspan>
+          ))}
+        </text>
+      </g>
+    )
+  }
+  
+  if (table === 'theft_by_location') {
     const rows = [...data]
-      .map(row => {
-        const crimes = Number(row.total_crimes)
-        const thefts = Number(row.total_thefts)
-
-        return {
-          location: String(row.location_description || 'Unknown'),
-          theft_ratio: crimes ? thefts / crimes : 0
-        }
-        
-
-      })
-      .sort((a, b) => b.theft_ratio - a.theft_ratio)
+      .map(row => ({
+        location: String(row.location_description || 'Unknown'),
+        total_crimes: Number(row.total_crimes),
+        total_thefts: Number(row.total_thefts),
+        theft_rate: Number(row.total_thefts) / Number(row.total_crimes),
+      }))
+      .filter(row => Number.isFinite(row.total_crimes) && row.total_crimes > 0)
+      .sort((a, b) => b.theft_rate - a.theft_rate)
       .slice(0, 10)
-    
+  
     return (
       <div className="chart-block">
-        <div className="chart-title">Theft ratio by location</div>
+        <div className="chart-title">Theft rate by location</div>
+  
         <div className="chart-wrap">
-          <ResponsiveContainer width="100%" height={290}>
-            <BarChart data={rows} margin={{ top: 20, right: 60, left: 10, bottom: 20 }}>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart
+              layout="vertical"
+              data={rows}
+              margin={{ top: 10, right: -40, left: -65, bottom: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis
-                dataKey="location"
-                angle={-35}
-                textAnchor="end"
-                interval={0}
-                height={80}
-                tick={{ fontSize: 10}}
-              />
+  
+              <XAxis type="number" domain={[0, 1]} />
+  
               <YAxis
-                tickFormatter={(v) => `${Math.round(v * 100)}%`}
+                type="category"
+                dataKey="location"
+                width={260}
+                tick={{ fontSize: 11 }}
               />
+              
+  
               <Tooltip
-                formatter={(v) => `${(v * 100).toFixed(1)}%`}
+                formatter={(value, name, props) => {
+                  const { total_thefts, total_crimes } = props.payload
+                  return [
+                    `${(value * 100).toFixed(2)}%`,
+                    `Theft Rate (${total_thefts}/${total_crimes})`
+                  ]
+                }}
               />
+  
               <Bar
-                dataKey="theft_ratio"
+                dataKey="theft_rate"
                 fill="#f59e0b"
-                radius={[6, 6, 0, 0]}
+                radius={[0, 6, 6, 0]}
               />
             </BarChart>
           </ResponsiveContainer>
@@ -286,7 +317,6 @@ export default function ChartView({ table, data }) {
       </div>
     )
   }
-
   // if(table === transit_vs_commercial_robbery_count) {      finish, include rates
   //   const rows = [...data]
   //     .map(row => ({
