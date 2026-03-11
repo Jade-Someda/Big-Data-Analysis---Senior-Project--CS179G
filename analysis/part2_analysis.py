@@ -227,19 +227,40 @@ def main():
 
     # Public transit locations (train stations, buses) have higher robbery rates than commercial areas.
      # 1)filter out rows with invalid columns 
-    df_robbery = df.filter((col("primary_type") == "ROBBERY") & col("location_description").isNotNull())
+    # df_robbery = df.filter((col("primary_type") == "ROBBERY") & col("location_description").isNotNull())
 
-    # 2) group data into buckets: public transit and commercial areas
-    robberies_categorized = df_robbery.withColumn(
-    "location_type",
-    when(col("location_description").rlike(r"(?i)(TRAIN|BUS|TRANSIT|STATION)"), "Public Transit")
-    .when(col("location_description").rlike(r"(?i)(COMMERCIAL|STORE|SHOP|MARKET)"), "Commercial")
-    .otherwise("Other"))
+    # # 2) group data into buckets: public transit and commercial areas
+    # robberies_categorized = df_robbery.withColumn(
+    # "location_type",
+    # when(col("location_description").rlike(r"(?i)(TRAIN|BUS|TRANSIT|STATION)"), "Public Transit")
+    # .when(col("location_description").rlike(r"(?i)(COMMERCIAL|STORE|SHOP|MARKET)"), "Commercial")
+    # .otherwise("Other"))
 
-    # 3) make comparison
-    robbery_by_location = robberies_categorized.groupBy("location_type").agg(count("*").alias("robbery_count"))
+    # # 3) make comparison
+    # robbery_by_location = robberies_categorized.groupBy("location_type").agg(count("*").alias("robbery_count"))
 
-    #4) automateically create relation in schema.sql for sql
+    # #4) automateically create relation in schema.sql for sql
+    # write_to_mysql(robbery_by_location, "transit_vs_commercial_robbery_count", spark)
+    df_loc = df.filter(col("location_description").isNotNull())
+
+   
+    locations_categorized = df_loc.withColumn(
+        "location_type",
+        when(col("location_description").rlike(r"(?i)(TRAIN|BUS|TRANSIT|STATION)"), "Public Transit")
+        .when(col("location_description").rlike(r"(?i)(COMMERCIAL|STORE|SHOP|MARKET)"), "Commercial")
+        .otherwise("Other")
+    )
+
+    robbery_counts = locations_categorized.filter(col("primary_type") == "ROBBERY") \
+        .groupBy("location_type") \
+        .agg(count("*").alias("robbery_count"))
+    
+    total_crimes = locations_categorized.groupBy("location_type") \
+        .agg(count("*").alias("total_crimes"))
+
+    robbery_by_location = robbery_counts.join(total_crimes, "location_type") \
+        .withColumn("robbery_rate", col("robbery_count") / col("total_crimes"))
+
     write_to_mysql(robbery_by_location, "transit_vs_commercial_robbery_count", spark)
 
 
