@@ -36,7 +36,7 @@ CATEGORIES = {
         "Holiday vs Non-Holiday": "holiday_vs_nonholiday",
         # "Christmas": "christmas_by_type",
         "Christmas": "christmas_vs_nonchristmas_by_type",
-        "Thanksgiving": "thanksgiving_by_type",
+        "Thanksgiving": "thanksgiving_vs_nonthanksgiving_by_type",
         "Halloween": "halloween_vs_nonhalloween_by_type"
     },
     "Location-Based / Spatial": {
@@ -48,7 +48,6 @@ CATEGORIES = {
         "Transit vs Commercial": "transit_vs_commercial_robbery_count",
         "Theft by Location": "theft_by_location",
         "Sports Location Crimes": "sport_location_crimes",
-        "Sports Location Crimes by Type": "sport_location_crimes_by_type"
     },
     "Long-Term Trends": {
         "Yearly Crimes": "yearly_crimes",

@@ -106,6 +106,12 @@ export const TABLE_META = {
     description: 'Compares total crime counts on major holidays against typical non-holiday days to determine if holidays correlate with increased or decreased crime activity.',
     category: 'Seasonality',
   },
+  season_crimes: {
+  question: 'Which season experiences the most crime?',
+  hypothesis: 'Summer months see significantly higher crime rates than winter.',
+  description: 'Crime totals are aggregated by season to identify seasonal patterns. Summer includes June, July, and August; Late Winter includes January and February; Other includes all remaining months. This allows us to compare crime activity across different times of the year and observe trends in seasonal crime rates.',
+  category: 'Seasonality',
+  },
 
 }
 

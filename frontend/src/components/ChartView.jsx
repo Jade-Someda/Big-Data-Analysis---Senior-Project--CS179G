@@ -87,7 +87,7 @@ export default function ChartView({ table, data }) {
       }))
       .filter(row => Number.isFinite(row.total))
       .sort((a, b) => b.total - a.total)
-      .slice(0,15)
+      .slice(0,10)
   
     return (
       <div className="chart-block">
@@ -357,35 +357,96 @@ export default function ChartView({ table, data }) {
     )
   }
 
-  if (table === 'thanksgiving_by_type') {
-    const rows = [...data]
-      .map(row => ({
-        ...row,
-        primary_type: String(row.primary_type || 'Unknown'),
-        total_num: Number(row.total),
-      }))
-      .filter(row => Number.isFinite(row.total_num))
-      .sort((a, b) => b.total_num - a.total_num)
-      .slice(0, 5)
+if (table === 'thanksgiving_vs_nonthanksgiving_by_type') {
 
-    return (
-      <div className="chart-block">
-        <div className="chart-title">Thanksgiving crimes by type</div>
-        <div className="chart-wrap">
-          <ResponsiveContainer width="100%" height={290}>
-            <BarChart data={rows}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="primary_type" angle={0} textAnchor="end" height={100} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="total_num" fill="#f59e0b" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+  const THANKSGIVING_DAYS = 1 * 20;       // 1 day per year × 25 years
+  const NON_THANKSGIVING_DAYS = (365 - 1) * 20;
+
+  const crimeTypes = ["BATTERY", "THEFT", "CRIMINAL DAMAGE", "ASSAULT"];
+
+  const groupedData = crimeTypes.map(type => {
+    const thanksgivingRow = data.find(
+      row => row.primary_type === type && row.day_type === 'Thanksgiving'
+    );
+
+    const nonThanksgivingRow = data.find(
+      row => row.primary_type === type && row.day_type === 'Non-Thanksgiving'
+    );
+
+    const thanksgivingPerDay = thanksgivingRow
+      ? Number(thanksgivingRow.total) / THANKSGIVING_DAYS
+      : 0;
+
+    const nonThanksgivingPerDay = nonThanksgivingRow
+      ? Number(nonThanksgivingRow.total) / NON_THANKSGIVING_DAYS
+      : 0;
+
+    return {
+      crime: type,
+      Thanksgiving: thanksgivingPerDay,
+      "Non-Thanksgiving": nonThanksgivingPerDay
+    };
+  });
+
+  return (
+    <div className="chart-block">
+      <div className="chart-title">
+        Crime Comparison: Thanksgiving vs Non-Thanksgiving (Average per Day)
       </div>
-    )
-  }
 
+      <div className="chart-wrap">
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart
+            data={groupedData}
+            margin={{ top: 20, right: 40, left: 10, bottom: 40 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+
+            <XAxis dataKey="crime" angle={0} textAnchor="end" height={80} />
+
+            <YAxis tick={{ fontSize: 12 }} />
+
+            <Tooltip
+              formatter={(value) => `${value.toFixed(2)} per day`}
+            />
+
+            <Bar dataKey="Thanksgiving" fill="#f2a50c" radius={[6,6,0,0]} />
+
+            <Bar dataKey="Non-Thanksgiving" fill="#655005" radius={[6,6,0,0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+if (table === 'airport_theft_count_comparison') {
+  const rows = [...data]
+    .map(row => ({
+      ...row,
+      location_type: String(row.location_type || 'Unknown'),
+      theft_count_num: Number(row.theft_count),
+    }))
+    .filter(row => Number.isFinite(row.theft_count_num))
+    .sort((a, b) => b.theft_count_num - a.theft_count_num)
+
+  return (
+    <div className="chart-block">
+      <div className="chart-title">Theft counts: Airport vs Other locations</div>
+      <div className="chart-wrap">
+        <ResponsiveContainer width="100%" height={290}>
+          <BarChart data={rows}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="location_type" />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip />
+            <Bar dataKey="theft_count_num" fill="#0a70d5" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
   const renderWrappedTick = ({ x, y, payload }) => {
     const words = payload.value.split(" ")
   
@@ -605,7 +666,7 @@ if (table === 'christmas_vs_nonchristmas_by_type') {
             margin={{ top: 20, right: 40, left: 10, bottom: 40 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="crime" angle={-35} textAnchor="end" height={80} />
+            <XAxis dataKey="crime" angle={0} textAnchor="end" height={80} />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip
               formatter={(value, name) => `${value.toFixed(2)} per day`}
@@ -656,7 +717,7 @@ if (table === 'halloween_vs_nonhalloween_by_type') {
             margin={{ top: 20, right: 40, left: 10, bottom: 40 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="crime" angle={-35} textAnchor="end" height={80} />
+            <XAxis dataKey="crime" angle={0} textAnchor="end" height={80} />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip
               formatter={(value, name) => `${value.toFixed(2)} per day`}
@@ -698,6 +759,49 @@ if (table === 'transit_vs_commercial_robbery_count') {
     </div>
   )
 }
+  if (table === 'season_crimes') {
+  // Map each season to number of months it represents
+  const monthsPerSeason = {
+    "Summer": 3,
+    "Late Winter": 2,
+    "Other": 7, // remaining months
+    "Unknown": 1,
+  };
+
+  const rows = [...data]
+    .map(row => {
+      const season = String(row.season || 'Unknown');
+      const total_crimes_num = Number(row.total_crimes);
+      const avg_crimes_per_month = Number.isFinite(total_crimes_num) 
+        ? total_crimes_num / (monthsPerSeason[season] || 1)
+        : 0;
+      return {
+        ...row,
+        season,
+        total_crimes_num,
+        avg_crimes_per_month,
+      };
+    })
+    .filter(row => Number.isFinite(row.avg_crimes_per_month))
+    .sort((a, b) => b.avg_crimes_per_month - a.avg_crimes_per_month);
+
+  return (
+    <div className="chart-block">
+      <div className="chart-title">Average Crime per Month by Season</div>
+      <div className="chart-wrap">
+        <ResponsiveContainer width="100%" height={290}>
+          <BarChart data={rows}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="season" />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip formatter={(v) => v.toFixed(1)} />
+            <Bar dataKey="avg_crimes_per_month" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
 
 
   return (
@@ -706,16 +810,5 @@ if (table === 'transit_vs_commercial_robbery_count') {
       <p className="chart-empty">A chart for this question is coming soon.</p>
     </div>
   )
-
-
-
-
-    return (
-      <div className="chart-block">
-        <div className="chart-title">Visualization</div>
-        <p className="chart-empty">A chart for this question is coming soon.</p>
-      </div>
-    )
-
 }
 
