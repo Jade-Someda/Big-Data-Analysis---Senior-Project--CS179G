@@ -79,6 +79,154 @@ export default function ChartView({ table, data }) {
       </div>
     )
   }
+  if (table === 'sport_location_crimes') {
+    const rows = [...data]
+      .map(row => ({
+        crime: String(row.primary_type || "Unknown"),
+        total: Number(row.total_crimes)
+      }))
+      .filter(row => Number.isFinite(row.total))
+      .sort((a, b) => b.total - a.total)
+      .slice(0,10)
+  
+    return (
+      <div className="chart-block">
+        <div className="chart-title">
+          Crime types at sports arenas and stadiums
+        </div>
+  
+        <div className="chart-wrap">
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart
+              layout="vertical"
+              data={rows}
+              margin={{ top: 10, right: 10, left: -40, bottom: 10 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+  
+              <XAxis
+                type="number"
+                tick={{ fontSize: 11 }}
+              />
+  
+              <YAxis
+                type="category"
+                dataKey="crime"
+                width={180}
+                tick={{ fontSize: 11 }}
+              />
+  
+              <Tooltip />
+  
+              <Bar
+                dataKey="total"
+                fill="#ef4444"
+                radius={[0,6,6,0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    )
+  }
+
+  if (table === "downtown_vs_residential_theft_robbery") {
+    const rows = [...data].map(row => ({
+      area: String(row.area_type),
+      rate: Number(row.rate),
+      total: Number(row.total_crimes),
+      tr: Number(row.tr_crimes)
+    }));
+  
+    return (
+      <div className="chart-block">
+        <div className="chart-title">
+          Theft and Robbery Rate: Downtown vs Residential Areas
+        </div>
+  
+        <div className="chart-wrap">
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart
+              data={rows}
+              margin={{ top: 20, right: 40, left: 20, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+  
+              <XAxis
+                dataKey="area"
+                tick={{ fontSize: 12 }}
+              />
+  
+              <YAxis
+                tickFormatter={(v) => (v * 100).toFixed(0) + "%"}
+              />
+  
+              <Tooltip
+                formatter={(v) => (v * 100).toFixed(1) + "%"}
+                labelFormatter={(label) => `${label} Area`}
+              />
+  
+              <Bar
+                dataKey="rate"
+                fill="#ef4444"
+                radius={[6,6,0,0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  }
+  if (table === "crimes_by_location_and_type") {
+    const rows = [...data]
+      .map(row => ({
+        location: String(row.location_category),
+        crime: String(row.primary_type),
+        total: Number(row.total)
+      }))
+      .sort((a, b) => b.total - a.total);
+  
+    return (
+      <div className="chart-block">
+        <div className="chart-title">
+          Most Common Crime Type by Location Category
+        </div>
+  
+        <div className="chart-wrap">
+          <ResponsiveContainer width="100%" height={420}>
+            <BarChart
+              data={rows}
+              layout="vertical"
+              margin={{ top: 20, right: 10, left: -40, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+  
+              <XAxis type="number" />
+  
+              <YAxis
+                type="category"
+                dataKey="location"
+                width={140}
+                tick={{ fontSize: 11 }}
+              />
+  
+              <Tooltip
+                formatter={(value, name, props) =>
+                  [`${value.toLocaleString()} crimes`, props.payload.crime]
+                }
+              />
+  
+              <Bar
+                dataKey="total"
+                fill="#6366f1"
+                radius={[0,6,6,0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  }
 
   if (table === 'time_period_crimes') {
     const rows = [...data]
@@ -188,46 +336,108 @@ export default function ChartView({ table, data }) {
     )
   }
 
-  if (table === 'thanksgiving_by_type') {
-    const rows = [...data]
-      .map(row => ({
-        ...row,
-        primary_type: String(row.primary_type || 'Unknown'),
-        total_num: Number(row.total),
-      }))
-      .filter(row => Number.isFinite(row.total_num))
-      .sort((a, b) => b.total_num - a.total_num)
-      .slice(0, 5)
+if (table === 'thanksgiving_vs_nonthanksgiving_by_type') {
 
-    return (
-      <div className="chart-block">
-        <div className="chart-title">Thanksgiving crimes by type</div>
-        <div className="chart-wrap">
-          <ResponsiveContainer width="100%" height={290}>
-            <BarChart data={rows}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="primary_type" angle={0} textAnchor="end" height={100} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="total_num" fill="#f59e0b" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+  const THANKSGIVING_DAYS = 1 * 20;       // 1 day per year × 25 years
+  const NON_THANKSGIVING_DAYS = (365 - 1) * 20;
+
+  const crimeTypes = ["BATTERY", "THEFT", "CRIMINAL DAMAGE", "ASSAULT"];
+
+  const groupedData = crimeTypes.map(type => {
+    const thanksgivingRow = data.find(
+      row => row.primary_type === type && row.day_type === 'Thanksgiving'
+    );
+
+    const nonThanksgivingRow = data.find(
+      row => row.primary_type === type && row.day_type === 'Non-Thanksgiving'
+    );
+
+    const thanksgivingPerDay = thanksgivingRow
+      ? Number(thanksgivingRow.total) / THANKSGIVING_DAYS
+      : 0;
+
+    const nonThanksgivingPerDay = nonThanksgivingRow
+      ? Number(nonThanksgivingRow.total) / NON_THANKSGIVING_DAYS
+      : 0;
+
+    return {
+      crime: type,
+      Thanksgiving: thanksgivingPerDay,
+      "Non-Thanksgiving": nonThanksgivingPerDay
+    };
+  });
+
+  return (
+    <div className="chart-block">
+      <div className="chart-title">
+        Crime Comparison: Thanksgiving vs Non-Thanksgiving (Average per Day)
       </div>
-    )
-  }
 
-  if (table === 'season_crimes') {
-    const rows = [...data]
-      .map(row => ({
-        ...row,
-        season: String(row.season || 'Unknown'),
-        total_crimes_num: Number(row.total_crimes),
-      }))
-      .filter(row => Number.isFinite(row.total_crimes_num))
-      .sort((a, b) => b.total_crimes_num - a.total_crimes_num)
+      <div className="chart-wrap">
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart
+            data={groupedData}
+            margin={{ top: 20, right: 40, left: 10, bottom: 40 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
-    return (
+            <XAxis dataKey="crime" angle={0} textAnchor="end" height={80} />
+
+            <YAxis tick={{ fontSize: 12 }} />
+
+            <Tooltip
+              formatter={(value) => `${value.toFixed(2)} per day`}
+            />
+
+            <Bar dataKey="Thanksgiving" fill="#f2a50c" radius={[6,6,0,0]} />
+
+            <Bar dataKey="Non-Thanksgiving" fill="#655005" radius={[6,6,0,0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+if (table === 'airport_theft_count_comparison') {
+  const rows = [...data]
+    .map(row => ({
+      ...row,
+      location_type: String(row.location_type || 'Unknown'),
+      theft_count_num: Number(row.theft_count),
+    }))
+    .filter(row => Number.isFinite(row.theft_count_num))
+    .sort((a, b) => b.theft_count_num - a.theft_count_num)
+
+  return (
+    <div className="chart-block">
+      <div className="chart-title">Theft counts: Airport vs Other locations</div>
+      <div className="chart-wrap">
+        <ResponsiveContainer width="100%" height={290}>
+          <BarChart data={rows}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="location_type" />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip />
+            <Bar dataKey="theft_count_num" fill="#0a70d5" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
+
+if (table === 'season_crimes') {
+  const rows = [...data]
+    .map(row => ({
+      ...row,
+      season: String(row.season || 'Unknown'),
+      total_crimes_num: Number(row.total_crimes),
+    }))
+    .filter(row => Number.isFinite(row.total_crimes_num))
+    .sort((a, b) => b.total_crimes_num - a.total_crimes_num)
+
+  return (
       <div className="chart-block">
         <div className="chart-title">Crime volume by season</div>
         <div className="chart-wrap">
@@ -509,6 +719,49 @@ if (table === 'transit_vs_commercial_robbery_count') {
       </div>
     </div>
   )
+}
+  if (table === 'season_crimes') {
+  // Map each season to number of months it represents
+  const monthsPerSeason = {
+    "Summer": 3,
+    "Late Winter": 2,
+    "Other": 7, // remaining months
+    "Unknown": 1,
+  };
+
+  const rows = [...data]
+    .map(row => {
+      const season = String(row.season || 'Unknown');
+      const total_crimes_num = Number(row.total_crimes);
+      const avg_crimes_per_month = Number.isFinite(total_crimes_num) 
+        ? total_crimes_num / (monthsPerSeason[season] || 1)
+        : 0;
+      return {
+        ...row,
+        season,
+        total_crimes_num,
+        avg_crimes_per_month,
+      };
+    })
+    .filter(row => Number.isFinite(row.avg_crimes_per_month))
+    .sort((a, b) => b.avg_crimes_per_month - a.avg_crimes_per_month);
+
+  return (
+    <div className="chart-block">
+      <div className="chart-title">Average Crime per Month by Season</div>
+      <div className="chart-wrap">
+        <ResponsiveContainer width="100%" height={290}>
+          <BarChart data={rows}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="season" />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip formatter={(v) => v.toFixed(1)} />
+            <Bar dataKey="avg_crimes_per_month" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 }
 
 if (table === 'airport_theft_count_comparison') {

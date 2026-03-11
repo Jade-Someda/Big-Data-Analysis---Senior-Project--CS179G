@@ -168,10 +168,32 @@ def main():
     halloween_distribution = df_top_crimes.groupBy("day_type", "primary_type").agg(count("*").alias("total"))
     write_to_mysql(halloween_distribution, "halloween_vs_nonhalloween_by_type", spark)
 
-    thanksgiving_dates = ["2022-11-24", "2023-11-23", "2024-11-28", "2021-11-25", "2020-11-26", "2019-11-28"]
+    thanksgiving_dates = ["2020-11-26","2019-11-28","2018-11-22","2017-11-23","2016-11-24","2015-11-26","2014-11-27","2013-11-28","2012-11-22","2011-11-24","2010-11-25","2009-11-26","2008-11-27","2007-11-22","2006-11-23","2005-11-24","2004-11-25","2003-11-27","2002-11-28","2001-11-22","2000-11-23"]
     thanksgiving = df.filter(col("date_only").cast("string").isin(thanksgiving_dates)).groupBy("primary_type").agg(count("*").alias("total")).orderBy(col("total").desc())
     write_to_mysql(thanksgiving, "thanksgiving_by_type", spark)
     
+    df_with_thanksgiving_flag = df.withColumn(
+        "day_type",
+        when(col("date_only").cast("string").isin(thanksgiving_dates), "Thanksgiving")
+        .otherwise("Non-Thanksgiving")
+    )
+
+    # Filter for top Thanksgiving crimes
+    top_thanksgiving_crimes = ["BATTERY", "THEFT", "CRIMINAL DAMAGE", "ASSAULT"]
+    df_top_thanksgiving_crimes = df_with_thanksgiving_flag.filter(col("primary_type").isin(top_thanksgiving_crimes))
+
+    # Aggregate by day type and crime type
+    thanksgiving_distribution = df_top_thanksgiving_crimes.groupBy("day_type", "primary_type") \
+        .agg(count("*").alias("total"))
+
+    # Write to MySQL
+    write_to_mysql(thanksgiving_distribution, "thanksgiving_vs_nonthanksgiving_by_type", spark)
+    from pyspark.sql.functions import regexp_replace, trim
+
+    df = df.withColumn(
+        "location_description",
+        trim(regexp_replace(col("location_description"), r"\s*/\s*", "/"))
+    )
 
     #old sports_by_location -----------------------------------------------------------------
     # sport_locations_df = df.filter(
@@ -347,7 +369,6 @@ def main():
     joined = location_type_counts.join(location_totals_filtered,on="location_description",how="inner")
     windowSpec = Window.partitionBy("location_description").orderBy(col("total").desc())
     ranked = joined.withColumn("rank",row_number().over(windowSpec))
-   
     
     df_community = df.filter(col("community_area").isNotNull() & (col("community_area") != ""))
     community_area_crimes = df_community.groupBy("community_area").agg(count("*").alias("total_crimes")).orderBy(col("total_crimes").desc())
