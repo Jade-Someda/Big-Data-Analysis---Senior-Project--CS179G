@@ -346,6 +346,7 @@ export default function ChartView({ table, data }) {
       </div>
     )
   }
+
   if (table === 'monthly_crimes') {
   const monthNames = [
     'Jan','Feb','Mar','Apr','May','Jun',
@@ -495,5 +496,16 @@ if (table === 'halloween_vs_nonhalloween_by_type') {
       <p className="chart-empty">A chart for this question is coming soon.</p>
     </div>
   )
+
+
+
+
+    return (
+      <div className="chart-block">
+        <div className="chart-title">Visualization</div>
+        <p className="chart-empty">A chart for this question is coming soon.</p>
+      </div>
+    )
+
 }
 
