@@ -177,7 +177,6 @@ def main():
 
 
 
-
     df_location = (
         df
         .filter(col("location_description").isNotNull() & (col("location_description") != ""))
