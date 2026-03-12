@@ -11,12 +11,6 @@ export const TABLE_META = {
     description: 'Crimes aggregated by community area; pairs well with map visualizations.',
     category: 'Location & spatial patterns',
   },
-  community_area_crimes: {
-    question: 'Which specific community areas see the most reported crime?',
-    hypothesis: 'Downtown and dense neighborhoods appear as persistent hotspots.',
-    description: 'Crimes aggregated by community area; pairs well with map visualizations.',
-    category: 'Location & spatial patterns',
-  },
   crimes_by_location:{ //jade
     question: 'What areas types have the higheset crime rate?',
     description: ' The table below illustrates compares the primary crime to the total amount of crime per location, to provide the relative context.',
@@ -83,13 +77,6 @@ export const TABLE_META = {
     hypothesis: 'Economic stress during the recession increased property crimes like theft.',
     description: 'Crime distribution by type between 2007 and 2009.',
     category: 'Long-term trends',
-  },
-
-  community_area_crimes: {
-    question: 'Which community areas see the most reported crime?',
-    hypothesis: 'Downtown and dense neighborhoods appear as persistent hotspots.',
-    description: 'Crimes aggregated by community area; pairs well with map visualizations.',
-    category: 'Location-Based / Spatial',
   },
   thanksgiving_by_type: {
     question: 'What crime types rise during Thanksgiving?',
