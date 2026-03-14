@@ -17,15 +17,15 @@ Main Data Structure: Dictionaries/Nested Dictionary
 
 Visualized: 
 
-Dictionary
-|__ sub-dictionary
-|       |__questions/hypotheses
-|__sub-dictionary
-|       |__questions/hypotheses
-|__ sub-dictionary
-|       |__questions/hypotheses
-|__sub-dictionary
-       |__questions/hypotheses
+       Dictionary
+       |__ sub-dictionary
+       |       |__questions/hypotheses
+       |__sub-dictionary
+       |       |__questions/hypotheses
+       |__ sub-dictionary
+       |       |__questions/hypotheses
+       |__sub-dictionary
+              |__questions/hypotheses
 
 # The Pipeline: 
 Pipeline Process for Web Interface: 
