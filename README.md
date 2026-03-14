@@ -36,6 +36,7 @@ Visualized:
 
 # The Workflow: (Cleaning Data --> Web Interface)
 Overview: Raw Data → Pre-Process/Clean Data → Data Analysis → Data loaded into MySQL Database → Database Tables on Webpage 
+
 1) Clean Data:\
    spark-submit test.py
 
@@ -53,7 +54,10 @@ Overview: Raw Data → Pre-Process/Clean Data → Data Analysis → Data loaded 
  	in backend: python3 app.py \
  	click open browser button\
  	in frontend: npm run dev\
- 	(click open browser)\
+ 	(click open browser)
+
+### Snapshot: 
+clean_chicago_data/test.py -> analysis/part2_analysis.py -> analysis/schema.sql -> backend/app.py -> frontend/tables.js ; etc 
 
 # Demo
 <add_video_of_running_website> 
