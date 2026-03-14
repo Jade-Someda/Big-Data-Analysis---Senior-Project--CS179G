@@ -28,8 +28,7 @@ Visualized:
               |__questions/hypotheses
 
 # The Pipeline: 
-Pipeline Process for Web Interface: 
-Raw Data → Pre-Processed/Clean Data on Pyspark → Data is Analyzed/Aggregated on PySpark → Data is formatted and loaded in MySQL Database → Database Tables are Shown on Web Interface
+       Raw Data → Pre-Processed/Clean Data on Pyspark → Data is Analyzed/Aggregated on PySpark → Data is formatted and loaded in MySQL Database → Database Tables are Shown on Web Interface
 
 # The Workflow: (Cleaning Data --> Web Interface)
 Overview: Raw Data → Pre-Process/Clean Data → Data Analysis → Data loaded into MySQL Database → Database Tables on Webpage 
