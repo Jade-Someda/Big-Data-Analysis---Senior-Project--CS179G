@@ -5,12 +5,12 @@ This project focuses on Big Data Analysis. This project runs pre-analysis/cleans
 ## Neha Gutapalli || Tanya Carillo || Eric Via || Arleen Kaur || Jade Someda
 
 # Software Architecture: 
-Apache Spark (PySpark) for distributed processing on cluster environment (class-142.cs.ucr.edu)
-MySQL for aggregated results for further analysis and queries
-Spark JDBC Connector to write processed Spark DataFrames into MySQL tables efficiently
-Flask REST API provides the data from the MySQL database
-Vite build tool used to help in creating the React.js single page web application
-Web uses 3-tier architecture with database, backend, and frontend
+       Apache Spark (PySpark) for distributed processing on cluster environment (class-142.cs.ucr.edu)
+       MySQL for aggregated results for further analysis and queries
+       Spark JDBC Connector to write processed Spark DataFrames into MySQL tables efficiently
+       Flask REST API provides the data from the MySQL database
+       Vite build tool used to help in creating the React.js single page web application
+       Web uses 3-tier architecture with database, backend, and frontend
 
 # Implemnetation: 
 Main Data Structure: Dictionaries/Nested Dictionary
