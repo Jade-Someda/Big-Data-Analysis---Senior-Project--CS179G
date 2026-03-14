@@ -1,21 +1,57 @@
-# CS179G
- Senior Design Project - Chicago Crime Analysis and Prediction
+# Senior Design Project - Chicago Crime Analysis and Prediction
+This project focuses on Big Data Analysis. This project runs pre-analysis/cleans data, analyszes data, loads the data into a MySQL Databse and presents it on a Web Interface that uses an LLM Chatbot to infer insights about the data, based on predefined hypothesis.
 
-Contributors:
-Neha Gutapalli || Tanya Carillo || Eric Via || Arleen Kaur || Jade Someda
+# Contributors:
+## Neha Gutapalli || Tanya Carillo || Eric Via || Arleen Kaur || Jade Someda
 
-This project focuses on Big Data Analysis, by analyzing a Crime Dataset that contains 14 million cases in Chicago. By exploring this data, insightful inferences can generated in order to better understand how to mitigate crime and provide helpful solutions. By identifying patterns predictions can be created.
+# Software Architecture: 
+Apache Spark (PySpark) for distributed processing on cluster environment (class-142.cs.ucr.edu)
+MySQL for aggregated results for further analysis and queries
+Spark JDBC Connector to write processed Spark DataFrames into MySQL tables efficiently
+Flask REST API provides the data from the MySQL database
+Vite build tool used to help in creating the React.js single page web application
+Web uses 3-tier architecture with database, backend, and frontend
 
-### Running the web app (React + Flask)
+# Implemnetation: 
+Main Data Structure: Dictionaries/Nested Dictionary
 
-1. **Backend (Flask API):** From the project root, run:
-   ```bash
-   python3 app.py --host=127.0.0.1 --port=5000
-   ```
-   Ensure MySQL is running and the `cs179g` database has the required tables.
+Visualized: 
 
-2. **Frontend (React):** In another terminal:
-   ```bash
-   cd frontend && npm install && npm run dev
-   ```
-   Open http://localhost:5173. The Vite dev server proxies `/api` to Flask on port 5000.
+Dictionary
+|__ sub-dictionary
+|       |__questions/hypotheses
+|__sub-dictionary
+|       |__questions/hypotheses
+|__ sub-dictionary
+|       |__questions/hypotheses
+|__sub-dictionary
+       |__questions/hypotheses
+
+
+
+
+# Application
+By exploring this data, insightful inferences can generated in order to better understand how to mitigate crime and provide helpful solutions. By identifying patterns predictions can be created.
+
+# The Workflow: (Cleaning Data --> Web Interface)
+Overview: Raw Data → Pre-Process/Clean Data → Data Analysis → Data loaded into MySQL Database → Database Tables on Webpage 
+1) Clean Data:
+   spark-submit test.py
+
+2) Run Analysis and Generate SQL Tables in MySQL Database: 
+ mysql -u root -D cs179g --socket=/home/cs179g/mysql/mysql.sock
+ spark-submit --jars ~/libs/mysql-connector-j-9.4.0.jar part2_analysis.py
+
+3) Run MySQL Database: 
+ mysqld --user=cs179g --datadir=/home/cs179g/mysql/data --socket=/home/ cs179g/mysql/mysql
+.sock & mysql -u root -D cs179g --socket=/home/cs179g/mysql/mysql.sock
+
+5) Run  Webpage:
+  cd project/CS179G/backend/ (terminal 1)
+ 	cd project/CS179G/frontend/ (terminal 2)
+ 	in backend: python3 app.py 
+ 	click open browser button
+ 	in frontend: npm run dev
+ 	(click open browser)
+
+
