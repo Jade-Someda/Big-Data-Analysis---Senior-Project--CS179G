@@ -2,7 +2,11 @@
 This project focuses on Big Data Analysis. This project runs pre-analysis/cleans data, analyzes data, loads the data into a MySQL Databse and presents it on a Web Interface that uses an LLM Chatbot to infer insights about the data, based on predefined hypothesis.
 
 # Contributors:
-## Neha Gutapalli || Tanya Carillo || Eric Via || Arleen Kaur || Jade Someda
+### Neha Gutapalli
+### Tanya Carillo
+### Eric Via
+### Arleen Kaur
+### Jade Someda
 
 # Software Architecture: 
 * Apache Spark (PySpark) for distributed processing on cluster environment (class-142.cs.ucr.edu)
