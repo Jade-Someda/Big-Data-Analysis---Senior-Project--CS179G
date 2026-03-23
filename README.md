@@ -63,6 +63,11 @@ Workflow of files
 clean_chicago_data/test.py -> analysis/part2_analysis.py -> analysis/schema.sql -> backend/app.py -> frontend/tables.js ; etc 
 
 # Demo
+
+
+https://github.com/user-attachments/assets/37fe2161-8920-4793-bf21-56c687d5eec4
+
+
 <add_video_of_running_website> 
 
 
