@@ -66,7 +66,7 @@ clean_chicago_data/test.py -> analysis/part2_analysis.py -> analysis/schema.sql 
 
 https://github.com/user-attachments/assets/37fe2161-8920-4793-bf21-56c687d5eec4
 
-
+\ 
 https://github.com/user-attachments/assets/f13dbb7c-b21d-48d7-902d-467da335f864
 
 
